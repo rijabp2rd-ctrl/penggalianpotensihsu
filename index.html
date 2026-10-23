@@ -1,0 +1,2911 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Aplikasi Penggalian Potensi Pajak Daerah, PBB & IKM</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#4f46e5',
+              600: '#4338ca',
+              700: '#3730a3',
+              900: '#1e1b4b'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f8fafc;
+      overflow-x: hidden;
+    }
+    .glass-header {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .hero-gradient {
+      background: radial-gradient(circle at 15% 20%, rgba(79, 70, 229, 0.14) 0%, transparent 45%),
+                  radial-gradient(circle at 85% 10%, rgba(16, 185, 129, 0.14) 0%, transparent 45%),
+                  linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%);
+    }
+    .emote-card {
+      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .emote-card:hover {
+      transform: translateY(-3px);
+    }
+    .emote-card.selected {
+      border-color: #4f46e5;
+      background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+      box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.22);
+      transform: translateY(-2px) scale(1.02);
+    }
+    .drawer-backdrop {
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(4px);
+      transition: opacity 0.3s ease;
+    }
+    .right-drawer {
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-indigo-600 selection:text-white min-h-screen flex flex-col">
+
+  <!-- TOP NAVBAR -->
+  <header class="sticky top-0 z-30 glass-header border-b border-slate-200/80 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-3">
+      <!-- Brand Identity -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="switchMainView('LANDING')">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-emerald-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25">
+          <i data-lucide="landmark" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold text-base sm:text-lg tracking-tight text-slate-900">BADAN PENDAPATAN DAERAH HSU</span>
+            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">TERPADU</span>
+          </div>
+          <p class="text-xs text-slate-500 font-medium">Aplikasi Penggalian Potensi Pajak Daerah, PBB & IKM</p>
+        </div>
+      </div>
+
+      <!-- Right Action Area & Samping Kanan Login Trigger -->
+      <div class="flex items-center gap-2.5">
+        <button id="btnBackToForms" onclick="switchMainView('LANDING')" class="hidden items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+          <i data-lucide="file-Spreadsheet" class="w-4 h-4 text-indigo-600"></i>
+          <span>Form Input</span>
+        </button>
+
+        <button id="btnOpenDashboardTop" onclick="openAdminDashboard()" class="hidden items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Dashboard Data</span>
+        </button>
+
+        <!-- Menu Login Samping Kanan Trigger Button -->
+        <button id="btnRightLoginMenu" onclick="toggleRightDrawer(true)" class="group relative inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white font-semibold text-xs sm:text-sm shadow-md shadow-slate-900/10 transition-all duration-200">
+          <span id="navStatusDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          <i data-lucide="user-Check" class="w-4 h-4"></i>
+          <span id="navLoginLabel">Menu Login</span>
+          <i data-lucide="panel-right-open" class="w-4 h-4 opacity-80 group-hover:translate-x-0.5 transition-transform"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- FLOATING RIGHT-EDGE QUICK TAB (Akses Cepat Menu Login Samping Kanan) -->
+  <button onclick="toggleRightDrawer(true)" title="Buka Menu Login Samping Kanan" class="fixed right-0 top-1/2 -translate-y-1/2 z-20 bg-gradient-to-b from-indigo-600 to-slate-900 text-white py-3.5 px-2 rounded-l-2xl shadow-xl border-l border-t border-b border-white/20 flex flex-col items-center gap-2 hover:pr-3.5 transition-all group">
+    <i data-lucide="key-round" class="w-4 h-4 text-amber-300 group-hover:rotate-12 transition-transform"></i>
+    <span class="text-[10px] font-bold tracking-widest uppercase [writing-mode:vertical-lr] rotate-180">LOGIN PANEL</span>
+  </button>
+
+  <!-- ======================================================================= -->
+  <!-- VIEW 1: LANDING PAGE & 3 FORMULIR UTAMA                                 -->
+  <!-- ======================================================================= -->
+  <main id="landingView" class="flex-1">
+    <!-- HERO BANNER -->
+    <section class="hero-gradient text-white py-8 sm:py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div class="max-w-7xl mx-auto relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div class="lg:col-span-7 space-y-4">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-indigo-200 text-xs font-semibold">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+              <span>Portal Pendataan Digital Terintegrasi</span>
+            </div>
+            <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+              Aplikasi Penggalian Potensi Pajak Daerah
+            </h1>
+            <p class="text-slate-300 text-sm sm:text-base max-w-2xl leading-relaxed">
+              Pilih instrumen formulir di bawah ini untuk melakukan input data potensi pajak daerah, pendataan objek Pajak Bumi dan Bangunan (PBB), atau pengisian Indeks Kepuasan Masyarakat (IKM) secara cepat, akurat, dan terdokumentasi.
+            </p>
+          </div>
+
+          <!-- Live Summary Cards -->
+          <div class="lg:col-span-5 grid grid-cols-3 gap-3">
+            <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-3.5 sm:p-4">
+              <div class="w-8 h-8 rounded-xl bg-indigo-500/30 flex items-center justify-center text-indigo-300 mb-2">
+                <i data-lucide="trending-up" class="w-4 h-4"></i>
+              </div>
+              <p class="text-[11px] text-slate-300 font-medium">Potensi Pajak</p>
+              <p id="statPublicPajak" class="text-lg sm:text-2xl font-extrabold text-white mt-0.5">0</p>
+              <p class="text-[10px] text-indigo-200 mt-0.5">Data Terinput</p>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-3.5 sm:p-4">
+              <div class="w-8 h-8 rounded-xl bg-emerald-500/30 flex items-center justify-center text-emerald-300 mb-2">
+                <i data-lucide="map-pinned" class="w-4 h-4"></i>
+              </div>
+              <p class="text-[11px] text-slate-300 font-medium">Data PBB</p>
+              <p id="statPublicPbb" class="text-lg sm:text-2xl font-extrabold text-white mt-0.5">0</p>
+              <p class="text-[10px] text-emerald-200 mt-0.5">Objek Terdata</p>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-3.5 sm:p-4">
+              <div class="w-8 h-8 rounded-xl bg-amber-500/30 flex items-center justify-center text-amber-300 mb-2">
+                <i data-lucide="smile-plus" class="w-4 h-4"></i>
+              </div>
+              <p class="text-[11px] text-slate-300 font-medium">Indeks IKM</p>
+              <p id="statPublicIkm" class="text-lg sm:text-2xl font-extrabold text-white mt-0.5">0.0</p>
+              <p class="text-[10px] text-amber-200 mt-0.5">Skor Rata-rata</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FORM SELECTOR TABS -->
+    <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20 pb-16">
+      <div class="bg-white rounded-2xl p-2 shadow-xl shadow-slate-900/5 border border-slate-200/90 grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <button id="tabBtnPajak" onclick="switchFormTab('PAJAK')" class="flex items-center gap-3 p-3.5 rounded-xl font-bold text-left transition-all bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
+          <div id="tabIconPajak" class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+            <i data-lucide="coins" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-xs opacity-80 font-medium">FORMULIR 01</div>
+            <div class="text-sm sm:text-base leading-tight">Potensi Pajak Daerah</div>
+          </div>
+        </button>
+
+        <button id="tabBtnPbb" onclick="switchFormTab('PBB')" class="flex items-center gap-3 p-3.5 rounded-xl font-bold text-left transition-all text-slate-600 hover:bg-slate-100">
+          <div id="tabIconPbb" class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+            <i data-lucide="building-2" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-xs opacity-75 font-medium">FORMULIR 02</div>
+            <div class="text-sm sm:text-base leading-tight">Input Form PBB</div>
+          </div>
+        </button>
+
+        <button id="tabBtnIkm" onclick="switchFormTab('IKM')" class="flex items-center gap-3 p-3.5 rounded-xl font-bold text-left transition-all text-slate-600 hover:bg-slate-100">
+          <div id="tabIconIkm" class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+            <i data-lucide="heart-handshake" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-xs opacity-75 font-medium">FORMULIR 03</div>
+            <div class="text-sm sm:text-base leading-tight">Indeks Kepuasan (IKM)</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- =================================================================== -->
+      <!-- FORM 1: FORM POTENSI PAJAK DAERAH                                   -->
+      <!-- =================================================================== -->
+      <div id="formContainerPajak" class="mt-6 bg-white rounded-3xl shadow-xl shadow-slate-900/5 border border-slate-200/80 overflow-hidden">
+        <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 px-6 py-5 text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <span class="text-xs uppercase tracking-wider font-bold text-indigo-200">Instrumen Pendataan 01</span>
+            <h2 class="text-xl font-extrabold">Form Potensi Pajak Daerah</h2>
+          </div>
+          <div class="inline-flex items-center gap-1.5 text-xs bg-white/15 px-3 py-1.5 rounded-xl font-medium">
+            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-300"></i>
+            <span>Kalkulasi Otomatis Aktif</span>
+          </div>
+        </div>
+
+        <form id="formPajakDaerah" onsubmit="handlePajakSubmit(event)" class="p-6 sm:p-8 space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <!-- Nama Wajib Pajak / Usaha -->
+            <div class="sm:col-span-2">
+              <label for="pajakNama" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Nama Wajib Pajak / Nama Usaha <span class="text-rose-500">*</span></label>
+              <div class="relative">
+                <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" id="pajakNama" required placeholder="Contoh: RM Sari Rasa / Budi Santoso" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 outline-none text-sm font-medium transition">
+              </div>
+            </div>
+
+            <!-- Dropdown Kecamatan -->
+            <div>
+              <label for="pajakKecamatan" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Kecamatan <span class="text-rose-500">*</span></label>
+              <select id="pajakKecamatan" required onchange="handleKecamatanChange('pajakKecamatan', 'pajakDesa')" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 outline-none text-sm font-medium bg-white transition">
+                <option value="">-- Pilih Kecamatan --</option>
+              </select>
+            </div>
+
+            <!-- Dropdown Desa -->
+            <div>
+              <label for="pajakDesa" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Desa / Kelurahan <span class="text-rose-500">*</span></label>
+              <select id="pajakDesa" required class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 outline-none text-sm font-medium bg-white transition">
+                <option value="">-- Pilih Kecamatan Terlebih Dahulu --</option>
+              </select>
+            </div>
+
+            <!-- Alamat Lengkap -->
+            <div class="sm:col-span-2">
+              <label for="pajakAlamat" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Alamat Lengkap Lokasi Potensi <span class="text-rose-500">*</span></label>
+              <textarea id="pajakAlamat" rows="2" required placeholder="Jl. Raya Utama No. 12, RT 02 / RW 01..." class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 outline-none text-sm font-medium transition"></textarea>
+            </div>
+
+            <!-- Nilai Omzet -->
+            <div>
+              <label for="pajakOmzet" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Nilai Omzet (Rp) <span class="text-rose-500">*</span></label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">Rp</span>
+                <input type="number" id="pajakOmzet" required min="1" step="any" oninput="calculateLivePajakEstimate()" placeholder="15000000" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 outline-none text-sm font-bold text-slate-900 transition">
+              </div>
+            </div>
+
+            <!-- Dropdown % (Persentase Tarif Pajak) -->
+            <div>
+              <label for="pajakPersen" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Persentase Pajak (%) <span class="text-rose-500">*</span></label>
+              <select id="pajakPersen" required onchange="calculateLivePajakEstimate()" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 outline-none text-sm font-semibold bg-white transition">
+                <option value="10" selected>10% (PBJT Makanan dan Minuman)</option>
+                <option value="15">15% (Hiburan / Reklame Tertentu)</option>
+                <option value="25">25% (Tarif Maksimum Khusus)</option>
+              </select>
+            </div>
+
+            <!-- Dropdown Tahun & Estimasi Pajak Box -->
+            <div>
+              <label for="pajakTahun" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Tahun Pajak <span class="text-rose-500">*</span></label>
+              <select id="pajakTahun" required class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 outline-none text-sm font-semibold bg-white transition">
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026" selected>2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+              </select>
+            </div>
+
+            <!-- Live Preview Estimasi Potensi Pajak -->
+            <div class="bg-indigo-50/80 border border-indigo-200 rounded-2xl px-4 py-3 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Estimasi Potensi Pajak</p>
+                <p id="pajakEstimasiPreview" class="text-lg font-extrabold text-indigo-950 mt-0.5">Rp 0</p>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
+                <i data-lucide="calculator" class="w-5 h-5"></i>
+              </div>
+            </div>
+
+            <!-- Dokumentasi (Upload File / Ambil Foto Kamera) -->
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Dokumentasi Lapangan (Foto Tempat Usaha / Bukti)</label>
+              <div class="border-2 border-dashed border-slate-300 rounded-2xl p-4 bg-slate-50/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                  <div id="previewBoxPajak" class="w-16 h-16 rounded-xl bg-slate-200 flex items-center justify-center overflow-hidden shrink-0 border border-slate-300">
+                    <i data-lucide="image" class="w-6 h-6 text-slate-400"></i>
+                  </div>
+                  <div>
+                    <p id="fileNamePajak" class="text-sm font-bold text-slate-700">Belum ada foto dipilih</p>
+                    <p class="text-xs text-slate-500">Format JPG/PNG atau gunakan kamera langsung</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                  <label for="fileInputPajak" class="flex-1 sm:flex-initial cursor-pointer inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-xs font-bold text-slate-700 transition">
+                    <i data-lucide="upload" class="w-4 h-4 text-indigo-600"></i>
+                    <span>Pilih File</span>
+                  </label>
+                  <input type="file" id="fileInputPajak" accept="image/*" class="hidden" onchange="handleFileSelect(event, 'PAJAK')">
+                  <button type="button" onclick="openCameraModal('PAJAK')" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-xs font-bold text-indigo-700 transition">
+                    <i data-lucide="camera" class="w-4 h-4"></i>
+                    <span>Buka Kamera</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-2 flex flex-col sm:flex-row items-center justify-end gap-3 border-t border-slate-100">
+            <button type="reset" onclick="resetDocumentation('PAJAK')" class="w-full sm:w-auto px-5 py-3 rounded-xl border border-slate-300 text-slate-600 font-bold text-sm hover:bg-slate-100 transition">
+              Reset Form
+            </button>
+            <button type="submit" id="btnSubmitPajak" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 transition">
+              <i data-lucide="send" class="w-4 h-4"></i>
+              <span>Simpan Potensi Pajak Daerah</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- =================================================================== -->
+      <!-- FORM 2: INPUT FORM PBB                                              -->
+      <!-- =================================================================== -->
+      <div id="formContainerPbb" class="hidden mt-6 bg-white rounded-3xl shadow-xl shadow-slate-900/5 border border-slate-200/80 overflow-hidden">
+        <div class="bg-gradient-to-r from-emerald-600 to-teal-700 px-6 py-5 text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <span class="text-xs uppercase tracking-wider font-bold text-emerald-100">Instrumen Pendataan 02</span>
+            <h2 class="text-xl font-extrabold">Input Form Pajak Bumi dan Bangunan (PBB)</h2>
+          </div>
+          <div class="inline-flex items-center gap-1.5 text-xs bg-white/15 px-3 py-1.5 rounded-xl font-medium">
+            <i data-lucide="file-check-2" class="w-4 h-4 text-amber-300"></i>
+            <span>Validasi NIK 16 Digit</span>
+          </div>
+        </div>
+
+        <form id="formPbb" onsubmit="handlePbbSubmit(event)" class="p-6 sm:p-8 space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <!-- Nama Wajib Pajak PBB -->
+            <div>
+              <label for="pbbNama" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Nama Subjek / Wajib Pajak <span class="text-rose-500">*</span></label>
+              <input type="text" id="pbbNama" required placeholder="Masukkan Nama Lengkap sesuai KTP" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/15 outline-none text-sm font-medium transition">
+            </div>
+
+            <!-- NIK (16 Digit) -->
+            <div>
+              <label for="pbbNik" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Nomor Induk Kependudukan (NIK) <span class="text-rose-500">*</span></label>
+              <input type="text" id="pbbNik" required maxlength="16" pattern="\d{16}" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="16 Digit NIK KTP" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/15 outline-none text-sm font-mono font-bold transition">
+            </div>
+
+            <!-- Dropdown NOP Ada / Tidak -->
+            <div>
+              <label for="pbbStatusNop" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Status NOP (Nomor Objek Pajak) <span class="text-rose-500">*</span></label>
+              <select id="pbbStatusNop" required onchange="handleNopStatusChange()" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/15 outline-none text-sm font-semibold bg-white transition">
+                <option value="Ada">Ada (Sudah Memiliki NOP)</option>
+                <option value="Tidak Ada">Tidak Ada (Belum Memiliki NOP / Objek Baru)</option>
+              </select>
+            </div>
+
+            <!-- Nomor NOP (Kondisional) / Tahun Pajak -->
+            <div id="wrapperNomorNop">
+              <label for="pbbNomorNop" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Nomor Objek Pajak (Opsional jika Ada)</label>
+              <input type="text" id="pbbNomorNop" placeholder="Contoh: 32.01.010.001.002-0034.0" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/15 outline-none text-sm font-mono transition">
+            </div>
+
+            <!-- Dropdown Kecamatan -->
+            <div>
+              <label for="pbbKecamatan" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Kecamatan <span class="text-rose-500">*</span></label>
+              <select id="pbbKecamatan" required onchange="handleKecamatanChange('pbbKecamatan', 'pbbDesa')" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/15 outline-none text-sm font-medium bg-white transition">
+                <option value="">-- Pilih Kecamatan --</option>
+              </select>
+            </div>
+
+            <!-- Dropdown Desa -->
+            <div>
+              <label for="pbbDesa" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Desa / Kelurahan <span class="text-rose-500">*</span></label>
+              <select id="pbbDesa" required class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/15 outline-none text-sm font-medium bg-white transition">
+                <option value="">-- Pilih Kecamatan Terlebih Dahulu --</option>
+              </select>
+            </div>
+
+            <!-- Dropdown Tahun -->
+            <div class="sm:col-span-2">
+              <label for="pbbTahun" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Tahun Pendataan PBB <span class="text-rose-500">*</span></label>
+              <select id="pbbTahun" required class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/15 outline-none text-sm font-semibold bg-white transition">
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026" selected>2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+              </select>
+            </div>
+
+            <!-- Alamat Objek / Subjek PBB -->
+            <div class="sm:col-span-2">
+              <label for="pbbAlamat" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Alamat Lengkap Objek PBB <span class="text-rose-500">*</span></label>
+              <textarea id="pbbAlamat" rows="2" required placeholder="Masukkan alamat lengkap lokasi tanah/bangunan..." class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/15 outline-none text-sm font-medium transition"></textarea>
+            </div>
+
+            <!-- Dokumentasi PBB -->
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Dokumentasi Objek PBB / SPPT</label>
+              <div class="border-2 border-dashed border-slate-300 rounded-2xl p-4 bg-slate-50/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                  <div id="previewBoxPbb" class="w-16 h-16 rounded-xl bg-slate-200 flex items-center justify-center overflow-hidden shrink-0 border border-slate-300">
+                    <i data-lucide="image" class="w-6 h-6 text-slate-400"></i>
+                  </div>
+                  <div>
+                    <p id="fileNamePbb" class="text-sm font-bold text-slate-700">Belum ada foto dipilih</p>
+                    <p class="text-xs text-slate-500">Unggah foto lokasi objek pajak atau dokumen SPPT</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                  <label for="fileInputPbb" class="flex-1 sm:flex-initial cursor-pointer inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-xs font-bold text-slate-700 transition">
+                    <i data-lucide="upload" class="w-4 h-4 text-emerald-600"></i>
+                    <span>Pilih File</span>
+                  </label>
+                  <input type="file" id="fileInputPbb" accept="image/*" class="hidden" onchange="handleFileSelect(event, 'PBB')">
+                  <button type="button" onclick="openCameraModal('PBB')" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-xs font-bold text-emerald-700 transition">
+                    <i data-lucide="camera" class="w-4 h-4"></i>
+                    <span>Buka Kamera</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-2 flex flex-col sm:flex-row items-center justify-end gap-3 border-t border-slate-100">
+            <button type="reset" onclick="resetDocumentation('PBB')" class="w-full sm:w-auto px-5 py-3 rounded-xl border border-slate-300 text-slate-600 font-bold text-sm hover:bg-slate-100 transition">
+              Reset Form
+            </button>
+            <button type="submit" id="btnSubmitPbb" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition">
+              <i data-lucide="send" class="w-4 h-4"></i>
+              <span>Simpan Data PBB</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- =================================================================== -->
+      <!-- FORM 3: FORM INDEKS KEPUASAN MASYARAKAT (IKM)                        -->
+      <!-- =================================================================== -->
+      <div id="formContainerIkm" class="hidden mt-6 bg-white rounded-3xl shadow-xl shadow-slate-900/5 border border-slate-200/80 overflow-hidden">
+        <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 px-6 py-5 text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <span class="text-xs uppercase tracking-wider font-bold text-amber-100">Instrumen Evaluasi Pelayanan 03</span>
+            <h2 class="text-xl font-extrabold">Form Indeks Kepuasan Masyarakat (IKM)</h2>
+          </div>
+          <div class="inline-flex items-center gap-2 text-xs bg-white/20 px-3.5 py-1.5 rounded-xl font-bold">
+            <span>Skor Anda:</span>
+            <span id="liveIkmTotalBadge" class="text-sm font-extrabold bg-white text-orange-600 px-2 py-0.5 rounded-lg">100 / 100</span>
+          </div>
+        </div>
+
+        <form id="formIkm" onsubmit="handleIkmSubmit(event)" class="p-6 sm:p-8 space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div>
+              <label for="ikmNama" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Nama Responden <span class="text-rose-500">*</span></label>
+              <input type="text" id="ikmNama" required placeholder="Nama Lengkap Anda" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/15 outline-none text-sm font-medium transition">
+            </div>
+
+            <div>
+              <label for="ikmAlamat" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Alamat Responden <span class="text-rose-500">*</span></label>
+              <input type="text" id="ikmAlamat" required placeholder="Desa / Kecamatan / Domisili" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/15 outline-none text-sm font-medium transition">
+            </div>
+
+            <div>
+              <label for="ikmKegiatan" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Kegiatan / Layanan <span class="text-rose-500">*</span></label>
+              <input type="text" id="ikmKegiatan" required placeholder="Contoh: Pendataan PBB / Sosialisasi Pajak" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/15 outline-none text-sm font-medium transition">
+            </div>
+          </div>
+
+          <div class="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-amber-900">
+            <div class="flex items-center gap-2 font-semibold">
+              <i data-lucide="info" class="w-4 h-4 text-amber-600 shrink-0"></i>
+              <span>Pilih Emote pada 5 pernyataan berikut (Setiap pernyataan bernilai maks. <strong>20 Poin</strong> — Total 5 Pernyataan = <strong>100 Poin</strong>).</span>
+            </div>
+            <span class="font-bold text-amber-700 shrink-0">🤩 Sangat Baik (20) • 😊 Baik (15) • 😐 Cukup (10) • 😞 Kurang Baik (5)</span>
+          </div>
+
+          <!-- 5 Pernyataan dengan Emote Container -->
+          <div id="ikmQuestionsWrapper" class="space-y-4">
+            <!-- Pernyataan 1 -->
+            <div class="p-4 sm:p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-sm font-bold text-slate-800"><span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-600 text-white text-xs mr-2">1</span>Bagaimana Kegiatan monitoring bagi pihak sekolah dalam meningkatkan pemahaman mengenai administrasi perpajakan daerah?.</p>
+                <span id="badgeScoreQ1" class="text-xs font-extrabold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 shrink-0">20 Poin</span>
+              </div>
+              <input type="hidden" id="ikmQ1" value="20">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" data-question="1">
+                <button type="button" onclick="selectIkmEmote(1, 20, this)" class="emote-card selected flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">🤩</span>
+                  <span class="text-xs font-bold text-slate-800">Sangat Baik</span>
+                  <span class="text-[10px] font-semibold text-indigo-600">Nilai 20</span>
+                </button>
+                <button type="button" onclick="selectIkmEmote(1, 15, this)" class="emote-card flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">😊</span>
+                  <span class="text-xs font-bold text-slate-800">Baik</span>
+                  <span class="text-[10px] font-semibold text-emerald-600">Nilai 15</span>
+                </button>
+                <button type="button" onclick="selectIkmEmote(1, 10, this)" class="emote-card flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">😐</span>
+                  <span class="text-xs font-bold text-slate-800">Cukup</span>
+                  <span class="text-[10px] font-semibold text-amber-600">Nilai 10</span>
+                </button>
+                <button type="button" onclick="selectIkmEmote(1, 5, this)" class="emote-card flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">😞</span>
+                  <span class="text-xs font-bold text-slate-800">Kurang Baik</span>
+                  <span class="text-[10px] font-semibold text-rose-600">Nilai 5</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Pernyataan 2 -->
+            <div class="p-4 sm:p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-sm font-bold text-slate-800"><span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-600 text-white text-xs mr-2">2</span>Petugas memberikan penjelasan dan informasi yang jelas mengenai tujuan kegiatan monitoring serta penggalian potensi pajak daerah?.</p>
+                <span id="badgeScoreQ2" class="text-xs font-extrabold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 shrink-0">20 Poin</span>
+              </div>
+              <input type="hidden" id="ikmQ2" value="20">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" data-question="2">
+                <button type="button" onclick="selectIkmEmote(2, 20, this)" class="emote-card selected flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">🤩</span>
+                  <span class="text-xs font-bold text-slate-800">Sangat Baik</span>
+                  <span class="text-[10px] font-semibold text-indigo-600">Nilai 20</span>
+                </button>
+                <button type="button" onclick="selectIkmEmote(2, 15, this)" class="emote-card flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">😊</span>
+                  <span class="text-xs font-bold text-slate-800">Baik</span>
+                  <span class="text-[10px] font-semibold text-emerald-600">Nilai 15</span>
+                </button>
+                <button type="button" onclick="selectIkmEmote(2, 10, this)" class="emote-card flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">😐</span>
+                  <span class="text-xs font-bold text-slate-800">Cukup</span>
+                  <span class="text-[10px] font-semibold text-amber-600">Nilai 10</span>
+                </button>
+                <button type="button" onclick="selectIkmEmote(2, 5, this)" class="emote-card flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">😞</span>
+                  <span class="text-xs font-bold text-slate-800">Kurang Baik</span>
+                  <span class="text-[10px] font-semibold text-rose-600">Nilai 5</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Pernyataan 3 -->
+            <div class="p-4 sm:p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-sm font-bold text-slate-800"><span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-600 text-white text-xs mr-2">3</span>KBagaimana Pelaksanaan monitoring dan pendataan potensi pajak di lingkungan sekolah berjalan dengan tertib, lancar, dan sesuai dengan prosedur yang berlaku.</p>
+                <span id="badgeScoreQ3" class="text-xs font-extrabold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 shrink-0">20 Poin</span>
+              </div>
+              <input type="hidden" id="ikmQ3" value="20">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" data-question="3">
+                <button type="button" onclick="selectIkmEmote(3, 20, this)" class="emote-card selected flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">🤩</span>
+                  <span class="text-xs font-bold text-slate-800">Sangat Baik</span>
+                  <span class="text-[10px] font-semibold text-indigo-600">Nilai 20</span>
+                </button>
+                <button type="button" onclick="selectIkmEmote(3, 15, this)" class="emote-card flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">😊</span>
+                  <span class="text-xs font-bold text-slate-800">Baik</span>
+                  <span class="text-[10px] font-semibold text-emerald-600">Nilai 15</span>
+                </button>
+                <button type="button" onclick="selectIkmEmote(3, 10, this)" class="emote-card flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">😐</span>
+                  <span class="text-xs font-bold text-slate-800">Cukup</span>
+                  <span class="text-[10px] font-semibold text-amber-600">Nilai 10</span>
+                </button>
+                <button type="button" onclick="selectIkmEmote(3, 5, this)" class="emote-card flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">😞</span>
+                  <span class="text-xs font-bold text-slate-800">Kurang Baik</span>
+                  <span class="text-[10px] font-semibold text-rose-600">Nilai 5</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Pernyataan 4 -->
+            <div class="p-4 sm:p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-sm font-bold text-slate-800"><span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-600 text-white text-xs mr-2">4</span>Bagaimana Petugas melakukan komunikasi dan koordinasi yang baik dengan pihak sekolah dalam pengumpulan data?.</p>
+                <span id="badgeScoreQ4" class="text-xs font-extrabold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 shrink-0">20 Poin</span>
+              </div>
+              <input type="hidden" id="ikmQ4" value="20">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" data-question="4">
+                <button type="button" onclick="selectIkmEmote(4, 20, this)" class="emote-card selected flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">🤩</span>
+                  <span class="text-xs font-bold text-slate-800">Sangat Baik</span>
+                  <span class="text-[10px] font-semibold text-indigo-600">Nilai 20</span>
+                </button>
+                <button type="button" onclick="selectIkmEmote(4, 15, this)" class="emote-card flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">😊</span>
+                  <span class="text-xs font-bold text-slate-800">Baik</span>
+                  <span class="text-[10px] font-semibold text-emerald-600">Nilai 15</span>
+                </button>
+                <button type="button" onclick="selectIkmEmote(4, 10, this)" class="emote-card flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">😐</span>
+                  <span class="text-xs font-bold text-slate-800">Cukup</span>
+                  <span class="text-[10px] font-semibold text-amber-600">Nilai 10</span>
+                </button>
+                <button type="button" onclick="selectIkmEmote(4, 5, this)" class="emote-card flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">😞</span>
+                  <span class="text-xs font-bold text-slate-800">Kurang Baik</span>
+                  <span class="text-[10px] font-semibold text-rose-600">Nilai 5</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Pernyataan 5 -->
+            <div class="p-4 sm:p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-sm font-bold text-slate-800"><span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-600 text-white text-xs mr-2">5</span>Bagaimana respon penyelesaian konsultasi/keluhan dan kepuasan Anda secara menyeluruh terhadap hasil akhir pelayanan BAPENDA HSU?.</p>
+                <span id="badgeScoreQ5" class="text-xs font-extrabold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 shrink-0">20 Poin</span>
+              </div>
+              <input type="hidden" id="ikmQ5" value="20">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" data-question="5">
+                <button type="button" onclick="selectIkmEmote(5, 20, this)" class="emote-card selected flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">🤩</span>
+                  <span class="text-xs font-bold text-slate-800">Sangat Baik</span>
+                  <span class="text-[10px] font-semibold text-indigo-600">Nilai 20</span>
+                </button>
+                <button type="button" onclick="selectIkmEmote(5, 15, this)" class="emote-card flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">😊</span>
+                  <span class="text-xs font-bold text-slate-800">Baik</span>
+                  <span class="text-[10px] font-semibold text-emerald-600">Nilai 15</span>
+                </button>
+                <button type="button" onclick="selectIkmEmote(5, 10, this)" class="emote-card flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">😐</span>
+                  <span class="text-xs font-bold text-slate-800">Cukup</span>
+                  <span class="text-[10px] font-semibold text-amber-600">Nilai 10</span>
+                </button>
+                <button type="button" onclick="selectIkmEmote(5, 5, this)" class="emote-card flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-white text-center">
+                  <span class="text-2xl sm:text-3xl mb-1">😞</span>
+                  <span class="text-xs font-bold text-slate-800">Kurang Baik</span>
+                  <span class="text-[10px] font-semibold text-rose-600">Nilai 5</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Saran / Masukan Tambahan -->
+          <div>
+            <label for="ikmSaran" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Saran / Masukan Perbaikan Layanan (Opsional)</label>
+            <textarea id="ikmSaran" rows="2" placeholder="Tuliskan kesan atau masukan Anda untuk peningkatan layanan kami..." class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/15 outline-none text-sm font-medium transition"></textarea>
+          </div>
+
+          <div class="pt-2 flex flex-col sm:flex-row items-center justify-end gap-3 border-t border-slate-100">
+            <button type="submit" id="btnSubmitIkm" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold text-sm shadow-lg shadow-orange-500/25 transition">
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+              <span>Kirim Survei Kepuasan (IKM)</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- ======================================================================= -->
+  <!-- VIEW 2: ADMIN & PETUGAS DASHBOARD VIEW                                  -->
+  <!-- ======================================================================= -->
+  <section id="dashboardView" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <!-- Top Bar, Filter Periode & Menu Cetak Laporan PDF / Excel -->
+    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div>
+        <div class="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 uppercase tracking-wider">
+          <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+          <span>Panel Analitik, Edit Data & Cetak Laporan</span>
+        </div>
+        <h2 class="text-2xl font-extrabold text-slate-900 mt-0.5">Dashboard Penggalian Potensi & IKM</h2>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <!-- Pilihan Kategori Laporan yang Dicetak -->
+        <select id="exportCategorySelect" class="px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold text-slate-700 bg-white focus:outline-none focus:border-indigo-600">
+          <option value="ACTIVE">Cetak Tabel Aktif</option>
+          <option value="ALL">Cetak Semua Tabel (Lengkap)</option>
+          <option value="PAJAK">Khusus Potensi Pajak Daerah</option>
+          <option value="PBB">Khusus Pendataan PBB</option>
+          <option value="IKM">Khusus Survei IKM</option>
+        </select>
+
+        <!-- Filter Periode Laporan -->
+        <select id="filterReportPeriod" onchange="loadDashboardData()" class="px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold text-slate-700 bg-slate-50 focus:outline-none focus:border-indigo-600">
+          <option value="ALL">Semua Periode</option>
+          <option value="DAILY">Laporan Harian (Hari Ini)</option>
+          <option value="WEEKLY">Laporan Mingguan (7 Hari)</option>
+          <option value="MONTHLY">Laporan Bulanan (Bulan Ini)</option>
+          <option value="YEARLY">Laporan Tahunan (Tahun Ini)</option>
+        </select>
+
+        <!-- Tombol Cetak PDF -->
+        <button type="button" onclick="exportReportToPDF()" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-bold shadow-sm shadow-rose-600/20 transition">
+          <i data-lucide="file-text" class="w-4 h-4"></i>
+          <span>Cetak PDF</span>
+        </button>
+
+        <!-- Tombol Export Excel -->
+        <button type="button" onclick="exportReportToExcel()" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-sm shadow-emerald-600/20 transition">
+          <i data-lucide="sheet" class="w-4 h-4"></i>
+          <span>Export Excel</span>
+        </button>
+
+        <!-- Tombol Muat Ulang -->
+        <button type="button" onclick="loadDashboardData()" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold transition" title="Muat Ulang Data">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Refresh</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase text-slate-400">Potensi Pajak Daerah</span>
+          <span class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><i data-lucide="coins" class="w-5 h-5"></i></span>
+        </div>
+        <p id="dashKpiPajakCount" class="text-2xl font-extrabold text-slate-900 mt-2">0 Data</p>
+        <p id="dashKpiOmzetTotal" class="text-xs text-slate-500 mt-1">Total Omzet: Rp 0</p>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase text-slate-400">Estimasi Pajak</span>
+          <span class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><i data-lucide="wallet" class="w-5 h-5"></i></span>
+        </div>
+        <p id="dashKpiEstimasi" class="text-2xl font-extrabold text-emerald-600 mt-2">Rp 0</p>
+        <p class="text-xs text-slate-500 mt-1">Akumulasi Potensi Pajak</p>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase text-slate-400">Pendataan PBB</span>
+          <span class="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center"><i data-lucide="building-2" class="w-5 h-5"></i></span>
+        </div>
+        <p id="dashKpiPbbCount" class="text-2xl font-extrabold text-slate-900 mt-2">0 Objek</p>
+        <p id="dashKpiPbbNop" class="text-xs text-slate-500 mt-1">NOP Ada: 0 • Belum: 0</p>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase text-slate-400">Rata-Rata Skor IKM</span>
+          <span class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><i data-lucide="award" class="w-5 h-5"></i></span>
+        </div>
+        <p id="dashKpiIkmAvg" class="text-2xl font-extrabold text-amber-600 mt-2">0.0 / 100</p>
+        <p id="dashKpiIkmGrade" class="text-xs text-slate-500 mt-1">Mutu: -</p>
+      </div>
+    </div>
+
+    <!-- Sub-Navigation Tabs inside Dashboard -->
+    <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
+      <button id="dashSubTabPajak" onclick="switchDashSubTab('PAJAK')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 text-white">Data Pajak Daerah</button>
+      <button id="dashSubTabPbb" onclick="switchDashSubTab('PBB')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-200/70">Data PBB</button>
+      <button id="dashSubTabIkm" onclick="switchDashSubTab('IKM')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-200/70">Data Responden IKM</button>
+      <button id="dashSubTabWilayah" onclick="switchDashSubTab('WILAYAH')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-200/70">Master Kecamatan & Desa</button>
+      <button id="dashSubTabUsers" onclick="switchDashSubTab('USERS')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-200/70">Manajemen Petugas</button>
+    </div>
+
+    <!-- TABLE 1: DATA POTENSI PAJAK DAERAH -->
+    <div id="dashPanelPajak" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="font-extrabold text-slate-800">Daftar Rekaman Potensi Pajak Daerah</h3>
+          <p class="text-xs text-slate-500">Klik tombol Edit untuk memperbarui rincian omzet, wilayah, atau dokumentasi.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="exportSingleTablePDF('PAJAK')" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition">
+            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+            <span>PDF Pajak</span>
+          </button>
+          <button type="button" onclick="exportSingleTableExcel('PAJAK')" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold transition">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Excel Pajak</span>
+          </button>
+          <input type="text" id="searchPajakInput" oninput="renderDashboardTables()" placeholder="Cari nama, kecamatan, desa..." class="px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-medium w-full sm:w-60">
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs sm:text-sm">
+          <thead>
+            <tr class="bg-slate-50 text-slate-500 font-bold uppercase text-[11px] border-b border-slate-200">
+              <th class="py-3.5 px-4">ID & Tahun</th>
+              <th class="py-3.5 px-4">Nama Wajib Pajak</th>
+              <th class="py-3.5 px-4">Wilayah & Alamat</th>
+              <th class="py-3.5 px-4">Omzet & %</th>
+              <th class="py-3.5 px-4">Estimasi Pajak</th>
+              <th class="py-3.5 px-4">Dokumentasi</th>
+              <th class="py-3.5 px-4 text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyPajakDaerah" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TABLE 2: DATA PBB -->
+    <div id="dashPanelPbb" class="hidden bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="font-extrabold text-slate-800">Daftar Pendataan Pajak Bumi & Bangunan (PBB)</h3>
+          <p class="text-xs text-slate-500">Kelola data subjek/objek PBB, status NOP, serta cetak rekapitulasi.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="exportSingleTablePDF('PBB')" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition">
+            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+            <span>PDF PBB</span>
+          </button>
+          <button type="button" onclick="exportSingleTableExcel('PBB')" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold transition">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Excel PBB</span>
+          </button>
+          <input type="text" id="searchPbbInput" oninput="renderDashboardTables()" placeholder="Cari nama, NIK, desa..." class="px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-medium w-full sm:w-60">
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs sm:text-sm">
+          <thead>
+            <tr class="bg-slate-50 text-slate-500 font-bold uppercase text-[11px] border-b border-slate-200">
+              <th class="py-3.5 px-4">ID & Tahun</th>
+              <th class="py-3.5 px-4">Nama & NIK</th>
+              <th class="py-3.5 px-4">Status NOP</th>
+              <th class="py-3.5 px-4">Kecamatan / Desa</th>
+              <th class="py-3.5 px-4">Alamat</th>
+              <th class="py-3.5 px-4">Dokumentasi</th>
+              <th class="py-3.5 px-4 text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyPbb" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TABLE 3: DATA IKM -->
+    <div id="dashPanelIkm" class="hidden bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="font-extrabold text-slate-800">Hasil Survei Indeks Kepuasan Masyarakat (IKM)</h3>
+          <p class="text-xs text-slate-500">Daftar penilaian responden beserta mutu pelayanan dan saran masukan.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="exportSingleTablePDF('IKM')" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition">
+            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+            <span>PDF IKM</span>
+          </button>
+          <button type="button" onclick="exportSingleTableExcel('IKM')" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold transition">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Excel IKM</span>
+          </button>
+          <input type="text" id="searchIkmInput" oninput="renderDashboardTables()" placeholder="Cari responden atau kegiatan..." class="px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-medium w-full sm:w-60">
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs sm:text-sm">
+          <thead>
+            <tr class="bg-slate-50 text-slate-500 font-bold uppercase text-[11px] border-b border-slate-200">
+              <th class="py-3.5 px-4">ID & Waktu</th>
+              <th class="py-3.5 px-4">Nama & Alamat</th>
+              <th class="py-3.5 px-4">Kegiatan</th>
+              <th class="py-3.5 px-4">Rincian (P1-P5)</th>
+              <th class="py-3.5 px-4">Total & Mutu</th>
+              <th class="py-3.5 px-4">Saran</th>
+              <th class="py-3.5 px-4 text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyIkm" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PANEL 4: MASTER WILAYAH KECAMATAN & DESA -->
+    <div id="dashPanelWilayah" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div class="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-fit">
+        <h3 class="font-extrabold text-slate-800 mb-1">Tambah Kecamatan & Desa</h3>
+        <p class="text-xs text-slate-500 mb-4">Data ini langsung tampil di dropdown Kecamatan dan Desa pada halaman form.</p>
+        <form onsubmit="handleAddWilayah(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nama Kecamatan</label>
+            <input type="text" id="newWilayahKecamatan" required placeholder="Contoh: Cibinong" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nama Desa / Kelurahan</label>
+            <input type="text" id="newWilayahDesa" required placeholder="Contoh: Pakansari" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm">
+          </div>
+          <button type="submit" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm transition">
+            Simpan Wilayah
+          </button>
+        </form>
+      </div>
+
+      <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100">
+          <h3 class="font-extrabold text-slate-800">Daftar Wilayah Kecamatan & Desa</h3>
+        </div>
+        <div class="overflow-x-auto max-h-96">
+          <table class="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr class="bg-slate-50 text-slate-500 font-bold uppercase text-[11px] border-b border-slate-200">
+                <th class="py-3 px-4">ID</th>
+                <th class="py-3 px-4">Kecamatan</th>
+                <th class="py-3 px-4">Desa / Kelurahan</th>
+                <th class="py-3 px-4 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyWilayah" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 5: MANAJEMEN PENGGUNA -->
+    <div id="dashPanelUsers" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div class="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-fit">
+        <h3 class="font-extrabold text-slate-800 mb-1">Tambah Akun Petugas / Admin</h3>
+        <p class="text-xs text-slate-500 mb-4">Hanya akun berstatus ADMIN yang dapat menambahkan pengguna baru.</p>
+        <form onsubmit="handleAddUser(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Username</label>
+            <input type="text" id="newUserUsername" required placeholder="petugas02" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nama Lengkap</label>
+            <input type="text" id="newUserFullName" required placeholder="Nama Lengkap Petugas" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Password Awal</label>
+            <input type="password" id="newUserPassword" required minlength="6" placeholder="Minimal 6 karakter" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Role</label>
+            <select id="newUserRole" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white">
+              <option value="PETUGAS">PETUGAS</option>
+              <option value="ADMIN">ADMIN</option>
+            </select>
+          </div>
+          <button type="submit" class="w-full py-3 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white font-bold text-sm transition">
+            Buat Akun Pengguna
+          </button>
+        </form>
+      </div>
+
+      <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100">
+          <h3 class="font-extrabold text-slate-800">Daftar Akun Terdaftar</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr class="bg-slate-50 text-slate-500 font-bold uppercase text-[11px] border-b border-slate-200">
+                <th class="py-3 px-4">Username</th>
+                <th class="py-3 px-4">Nama Lengkap</th>
+                <th class="py-3 px-4">Role</th>
+                <th class="py-3 px-4">Status</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyUsers" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================= -->
+  <!-- MENU LOGIN SAMPING KANAN (SLIDE-OVER RIGHT SIDEBAR DRAWER)              -->
+  <!-- ======================================================================= -->
+  <div id="rightDrawerBackdrop" onclick="toggleRightDrawer(false)" class="fixed inset-0 z-40 drawer-backdrop hidden opacity-0"></div>
+
+  <aside id="rightLoginDrawer" class="fixed top-0 right-0 bottom-0 z-50 w-full max-w-md bg-white shadow-2xl border-l border-slate-200 right-drawer translate-x-full flex flex-col justify-between overflow-y-auto">
+    <!-- Top Drawer Header -->
+    <div>
+      <div class="p-6 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
+            <i data-lucide="shield-lock" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-base">Panel Akses & Menu Login</h3>
+            <p class="text-xs text-slate-400">Otentikasi Petugas & Administrator</p>
+          </div>
+        </div>
+        <button onclick="toggleRightDrawer(false)" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- STATE A: BELUM LOGIN (GUEST) -->
+      <div id="drawerGuestSection" class="p-6 space-y-6">
+        <div class="bg-indigo-50/80 border border-indigo-100 rounded-2xl p-4 flex items-start gap-3">
+          <i data-lucide="key-round" class="w-5 h-5 text-indigo-600 shrink-0 mt-0.5"></i>
+          <div class="text-xs text-slate-600 leading-relaxed">
+            <p class="font-bold text-slate-800 mb-0.5">Akses Panel Manajemen</p>
+            Masuk menggunakan akun Petugas atau Administrator untuk melihat Dashboard Rekapitulasi, Laporan Harian/Bulanan, dan mengelola Master Wilayah.
+          </div>
+        </div>
+
+        <form id="formLoginRight" onsubmit="handleLoginSubmit(event)" class="space-y-4">
+          <div>
+            <label for="loginUsername" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Username</label>
+            <div class="relative">
+              <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+              <input type="text" id="loginUsername" required placeholder="Masukkan username" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 outline-none text-sm font-medium">
+            </div>
+          </div>
+
+          <div>
+            <label for="loginPassword" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Password</label>
+            <div class="relative">
+              <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+              <input type="password" id="loginPassword" required placeholder="Masukkan password" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 outline-none text-sm font-medium">
+            </div>
+          </div>
+
+          <button type="submit" id="btnSubmitLogin" class="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 transition">
+            <i data-lucide="log-in" class="w-4 h-4"></i>
+            <span>Masuk ke Sistem</span>
+          </button>
+        </form>
+
+        <!-- Quick Demo/Default Account Hint Box -->
+        <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50 space-y-2">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Informasi Akun Bawaan (Setup Awal)</p>
+          <div class="flex items-center justify-between text-xs bg-white p-2.5 rounded-xl border border-slate-200/80">
+            <div>
+              <span class="font-bold text-slate-800">Admin:</span> <code class="text-indigo-600 font-bold">admin</code> / <code class="text-indigo-600 font-bold">admin123</code>
+            </div>
+            <button type="button" onclick="fillQuickLogin('admin', 'admin123')" class="text-[11px] font-bold text-indigo-600 hover:underline">Isi Otomatis</button>
+          </div>
+          <div class="flex items-center justify-between text-xs bg-white p-2.5 rounded-xl border border-slate-200/80">
+            <div>
+              <span class="font-bold text-slate-800">Petugas:</span> <code class="text-emerald-600 font-bold">petugas</code> / <code class="text-emerald-600 font-bold">petugas123</code>
+            </div>
+            <button type="button" onclick="fillQuickLogin('petugas', 'petugas123')" class="text-[11px] font-bold text-emerald-600 hover:underline">Isi Otomatis</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATE B: SUDAH LOGIN (AUTHENTICATED) -->
+      <div id="drawerAuthSection" class="hidden p-6 space-y-6">
+        <div class="p-4 rounded-2xl bg-gradient-to-r from-indigo-50 to-emerald-50 border border-indigo-200/70 flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-extrabold text-lg" id="authAvatarInitial">
+            A
+          </div>
+          <div class="overflow-hidden">
+            <span id="authRoleBadge" class="inline-block px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-indigo-600 text-white">ADMIN</span>
+            <h4 id="authFullName" class="font-extrabold text-slate-900 truncate mt-0.5">Administrator</h4>
+            <p id="authUsername" class="text-xs text-slate-500 truncate">@admin</p>
+          </div>
+        </div>
+
+        <!-- Menu Navigasi Cepat Samping Kanan -->
+        <div class="space-y-2">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">Menu Navigasi Sistem</p>
+          <button onclick="openAdminDashboard(); toggleRightDrawer(false);" class="w-full flex items-center justify-between p-3.5 rounded-2xl bg-indigo-600 text-white font-bold text-sm shadow-md shadow-indigo-600/20 hover:bg-indigo-700 transition">
+            <span class="flex items-center gap-3">
+              <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+              <span>Buka Dashboard & Laporan</span>
+            </span>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+
+          <button onclick="switchMainView('LANDING'); toggleRightDrawer(false);" class="w-full flex items-center justify-between p-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition">
+            <span class="flex items-center gap-3">
+              <i data-lucide="file-plus-2" class="w-4 h-4 text-indigo-600"></i>
+              <span>Halaman Input 3 Formulir</span>
+            </span>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Form Ubah Password -->
+        <div class="border-t border-slate-200 pt-5">
+          <p class="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-2">
+            <i data-lucide="key" class="w-4 h-4 text-indigo-600"></i>
+            <span>Ubah Password Akun</span>
+          </p>
+          <form id="formChangePass" onsubmit="handleChangePassword(event)" class="space-y-3">
+            <input type="password" id="oldPasswordInput" required placeholder="Password Saat Ini" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium">
+            <input type="password" id="newPasswordInput" required minlength="6" placeholder="Password Baru (Min. 6 Karakter)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium">
+            <button type="submit" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition">
+              Perbarui Password
+            </button>
+          </form>
+        </div>
+
+        <!-- Tombol Logout -->
+        <div class="pt-2">
+          <button onclick="handleLogout()" class="w-full py-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-sm flex items-center justify-center gap-2 transition">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+            <span>Keluar Sesi (Logout)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Drawer Footer -->
+    <div class="p-4 border-t border-slate-100 text-center text-[11px] text-slate-400">
+      SIPP-PAJAK v1.0 • Terintegrasi Google Spreadsheet
+    </div>
+  </aside>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL KAMERA WEBRTC (UNTUK DOKUMENTASI PAJAK DAERAH & PBB)              -->
+  <!-- ======================================================================= -->
+  <div id="cameraModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200">
+      <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="camera" class="w-5 h-5 text-indigo-400"></i>
+          <h4 class="font-bold text-sm">Ambil Foto Dokumentasi Lapangan</h4>
+        </div>
+        <button type="button" onclick="closeCameraModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="p-5 space-y-4">
+        <div class="relative bg-black rounded-2xl overflow-hidden aspect-video flex items-center justify-center">
+          <video id="cameraVideoElement" autoplay playsinline class="w-full h-full object-cover"></video>
+          <canvas id="cameraCanvasElement" class="hidden"></canvas>
+        </div>
+        <div class="flex items-center justify-end gap-2">
+          <button type="button" onclick="closeCameraModal()" class="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600">Batal</button>
+          <button type="button" onclick="captureCameraFrame()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-2">
+            <i data-lucide="aperture" class="w-4 h-4"></i>
+            <span>Ambil Gambar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL EDIT DATA (PAJAK DAERAH, PBB, DAN IKM)                            -->
+  <!-- ======================================================================= -->
+  <div id="editRecordModal" class="fixed inset-0 z-50 hidden bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl border border-slate-200 my-8">
+      <!-- Header Modal Edit -->
+      <div class="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-indigo-500/25 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
+            <i data-lucide="pencil-line" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 id="editModalTitle" class="font-extrabold text-sm sm:text-base">Edit Data Rekaman</h4>
+            <p id="editModalSubtitle" class="text-[11px] text-slate-300 font-mono">ID: -</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeEditModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Form Edit -->
+      <form id="formEditRecord" onsubmit="handleUpdateRecordSubmit(event)" class="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+        <input type="hidden" id="editRecordType" value="">
+        <input type="hidden" id="editRecordId" value="">
+
+        <!-- SECTION 1: FIELDS UNTUK EDIT PAJAK DAERAH -->
+        <div id="editFieldsPajak" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nama Wajib Pajak / Usaha <span class="text-rose-500">*</span></label>
+            <input type="text" id="editPajakNama" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Kecamatan <span class="text-rose-500">*</span></label>
+            <select id="editPajakKecamatan" onchange="handleKecamatanChange('editPajakKecamatan', 'editPajakDesa')" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium bg-white"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Desa / Kelurahan <span class="text-rose-500">*</span></label>
+            <select id="editPajakDesa" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium bg-white"></select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Alamat Lengkap <span class="text-rose-500">*</span></label>
+            <textarea id="editPajakAlamat" rows="2" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nilai Omzet (Rp) <span class="text-rose-500">*</span></label>
+            <input type="number" id="editPajakOmzet" min="1" step="any" oninput="calculateEditPajakEstimate()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Persentase Pajak (%) <span class="text-rose-500">*</span></label>
+            <select id="editPajakPersen" onchange="calculateEditPajakEstimate()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold bg-white">
+              <option value="5">5%</option>
+              <option value="10">10%</option>
+              <option value="15">15%</option>
+              <option value="20">20%</option>
+              <option value="25">25%</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Tahun Pajak <span class="text-rose-500">*</span></label>
+            <select id="editPajakTahun" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold bg-white">
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+              <option value="2027">2027</option>
+              <option value="2028">2028</option>
+            </select>
+          </div>
+          <div class="bg-indigo-50 border border-indigo-200 rounded-xl px-3.5 py-2 flex flex-col justify-center">
+            <span class="text-[10px] font-bold uppercase text-indigo-600">Estimasi Pajak Baru</span>
+            <span id="editPajakEstimasiPreview" class="text-sm font-extrabold text-indigo-950">Rp 0</span>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Perbarui Foto Dokumentasi (Opsional)</label>
+            <input type="file" id="editPajakFile" accept="image/*" onchange="handleEditFileSelect(event)" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+          </div>
+        </div>
+
+        <!-- SECTION 2: FIELDS UNTUK EDIT PBB -->
+        <div id="editFieldsPbb" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nama Wajib Pajak <span class="text-rose-500">*</span></label>
+            <input type="text" id="editPbbNama" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">NIK (16 Digit) <span class="text-rose-500">*</span></label>
+            <input type="text" id="editPbbNik" maxlength="16" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono font-bold">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Status NOP <span class="text-rose-500">*</span></label>
+            <select id="editPbbStatusNop" onchange="handleEditNopStatusChange()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold bg-white">
+              <option value="Ada">Ada</option>
+              <option value="Tidak Ada">Tidak Ada</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nomor NOP</label>
+            <input type="text" id="editPbbNomorNop" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Kecamatan <span class="text-rose-500">*</span></label>
+            <select id="editPbbKecamatan" onchange="handleKecamatanChange('editPbbKecamatan', 'editPbbDesa')" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium bg-white"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Desa / Kelurahan <span class="text-rose-500">*</span></label>
+            <select id="editPbbDesa" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium bg-white"></select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Tahun Pendataan <span class="text-rose-500">*</span></label>
+            <select id="editPbbTahun" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold bg-white">
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+              <option value="2027">2027</option>
+              <option value="2028">2028</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Alamat Objek PBB <span class="text-rose-500">*</span></label>
+            <textarea id="editPbbAlamat" rows="2" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium"></textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Perbarui Foto Dokumentasi PBB (Opsional)</label>
+            <input type="file" id="editPbbFile" accept="image/*" onchange="handleEditFileSelect(event)" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+          </div>
+        </div>
+
+        <!-- SECTION 3: FIELDS UNTUK EDIT IKM -->
+        <div id="editFieldsIkm" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nama Responden <span class="text-rose-500">*</span></label>
+            <input type="text" id="editIkmNama" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Alamat Responden <span class="text-rose-500">*</span></label>
+            <input type="text" id="editIkmAlamat" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Kegiatan Pelayanan <span class="text-rose-500">*</span></label>
+            <input type="text" id="editIkmKegiatan" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Pernyataan 1 (Prosedur)</label>
+            <select id="editIkmP1" onchange="calculateEditIkmPreview()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold bg-white">
+              <option value="20">🤩 Sangat Baik (20)</option>
+              <option value="15">😊 Baik (15)</option>
+              <option value="10">😐 Cukup (10)</option>
+              <option value="5">😞 Kurang Baik (5)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Pernyataan 2 (Kecepatan)</label>
+            <select id="editIkmP2" onchange="calculateEditIkmPreview()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold bg-white">
+              <option value="20">🤩 Sangat Baik (20)</option>
+              <option value="15">😊 Baik (15)</option>
+              <option value="10">😐 Cukup (10)</option>
+              <option value="5">😞 Kurang Baik (5)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Pernyataan 3 (Kompetensi)</label>
+            <select id="editIkmP3" onchange="calculateEditIkmPreview()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold bg-white">
+              <option value="20">🤩 Sangat Baik (20)</option>
+              <option value="15">😊 Baik (15)</option>
+              <option value="10">😐 Cukup (10)</option>
+              <option value="5">😞 Kurang Baik (5)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Pernyataan 4 (Keramahan)</label>
+            <select id="editIkmP4" onchange="calculateEditIkmPreview()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold bg-white">
+              <option value="20">🤩 Sangat Baik (20)</option>
+              <option value="15">😊 Baik (15)</option>
+              <option value="10">😐 Cukup (10)</option>
+              <option value="5">😞 Kurang Baik (5)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Pernyataan 5 (Sarana Digital)</label>
+            <select id="editIkmP5" onchange="calculateEditIkmPreview()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold bg-white">
+              <option value="20">🤩 Sangat Baik (20)</option>
+              <option value="15">😊 Baik (15)</option>
+              <option value="10">😐 Cukup (10)</option>
+              <option value="5">😞 Kurang Baik (5)</option>
+            </select>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2 flex flex-col justify-center">
+            <span class="text-[10px] font-bold uppercase text-amber-700">Total Skor & Mutu IKM</span>
+            <span id="editIkmTotalPreview" class="text-sm font-extrabold text-amber-900">100 (A - Sangat Baik)</span>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Saran / Masukan</label>
+            <textarea id="editIkmSaran" rows="2" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium"></textarea>
+          </div>
+        </div>
+
+        <!-- Footer Tombol Simpan Perubahan -->
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+          <button type="button" onclick="closeEditModal()" class="px-4 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-100 transition">
+            Batal
+          </button>
+          <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-lg shadow-indigo-600/20 transition">
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <span>Simpan Perubahan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- GLOBAL LOADING OVERLAY -->
+  <div id="loadingOverlay" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-[2px] flex items-center justify-center">
+    <div class="bg-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-200">
+      <div class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      <span id="loadingText" class="text-sm font-bold text-slate-700">Memproses data...</span>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="bg-white border-t border-slate-200/80 py-5 px-4 text-center text-xs text-slate-500 mt-auto">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p class="font-semibold text-slate-700">© 2026 Aplikasi Penggalian Potensi Pajak Daerah, PBB & IKM</p>
+      <p>Dibangun dengan Arsitektur Google Apps Script & Google Spreadsheet</p>
+    </div>
+  </footer>
+
+  <!-- ======================================================================= -->
+  <!-- CLIENT-SIDE JAVASCRIPT                                                  -->
+  <!-- ======================================================================= -->
+  <script>
+    // 1. STATE MANAGEMENT
+    const APP_STATE = {
+      sessionKey: 'SIPP_PAJAK_SESSION_TOKEN_V1',
+      currentUser: null,
+      wilayahList: [],
+      activeDashSubTab: 'PAJAK',
+      activeCameraTarget: null,
+      activeMediaStream: null,
+      docs: {
+        PAJAK: { base64: '', name: '', mime: '' },
+        PBB: { base64: '', name: '', mime: '' },
+        EDIT: { base64: '', name: '', mime: '' }
+      },
+      dashboardCache: {
+        pajakList: [],
+        pbbList: [],
+        ikmList: [],
+        wilayahList: [],
+        usersList: []
+      }
+    };
+
+    // Fallback Preview Environment Polyfill (Hanya aktif apabila dibuka di luar Google Apps Script iframe untuk preview UI)
+    if (typeof google === 'undefined' || !google.script) {
+      const MOCK_STORAGE_KEY = 'SIPP_PAJAK_PREVIEW_DB_V1';
+      function getMockDb() {
+        const raw = localStorage.getItem(MOCK_STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+        const initial = {
+          wilayah: [
+            { id: 'WIL-01', kecamatan: 'Kecamatan Tengah', desa: 'Desa Sukamaju' },
+            { id: 'WIL-02', kecamatan: 'Kecamatan Tengah', desa: 'Desa Mekarsari' },
+            { id: 'WIL-03', kecamatan: 'Kecamatan Utara', desa: 'Desa Harapan Jaya' },
+            { id: 'WIL-04', kecamatan: 'Kecamatan Utara', desa: 'Desa Karya Bakti' },
+            { id: 'WIL-05', kecamatan: 'Kecamatan Selatan', desa: 'Desa Pasir Putih' },
+            { id: 'WIL-06', kecamatan: 'Kecamatan Selatan', desa: 'Desa Cempaka' }
+          ],
+          pajak: [
+            { ID: 'PJK-20261019-101', NAMA: 'RM Nusantara Raya', KECAMATAN: 'Kecamatan Tengah', DESA: 'Desa Sukamaju', ALAMAT: 'Jl. Merdeka No. 45', NILAI_OMZET: 45000000, PERSENTASE: 10, ESTIMASI_PAJAK: 4500000, TAHUN: '2026', DOKUMENTASI_URL: 'Terlampir (foto_usaha.jpg)', TIMESTAMP: new Date().toISOString(), INPUT_BY: 'petugas' }
+          ],
+          pbb: [
+            { ID: 'PBB-20261019-201', NAMA: 'H. Ahmad Hidayat', NIK: '3201012005800001', STATUS_NOP: 'Ada', NOMOR_NOP: '32.01.010.001.005-0122.0', KECAMATAN: 'Kecamatan Utara', DESA: 'Desa Harapan Jaya', ALAMAT: 'Jl. Melati Raya Blok B2', TAHUN: '2026', DOKUMENTASI_URL: 'Terlampir (sppt_pbb.jpg)', TIMESTAMP: new Date().toISOString(), INPUT_BY: 'petugas' }
+          ],
+          ikm: [
+            { ID: 'IKM-20261019-301', NAMA: 'Siti Rahmawati', ALAMAT: 'Desa Sukamaju', KEGIATAN: 'Pendataan Potensi Pajak & PBB', P1_NILAI: 20, P2_NILAI: 20, P3_NILAI: 15, P4_NILAI: 20, P5_NILAI: 20, TOTAL_NILAI: 95, KATEGORI_MUTU: 'A (Sangat Baik)', SARAN: 'Pelayanan petugas sangat ramah dan jelas.', TIMESTAMP: new Date().toISOString() }
+          ],
+          users: [
+            { username: 'admin', fullName: 'Administrator Utama', role: 'ADMIN', status: 'ACTIVE' },
+            { username: 'petugas', fullName: 'Petugas Lapangan 01', role: 'PETUGAS', status: 'ACTIVE' }
+          ]
+        };
+        localStorage.setItem(MOCK_STORAGE_KEY, JSON.stringify(initial));
+        return initial;
+      }
+      function saveMockDb(db) {
+        localStorage.setItem(MOCK_STORAGE_KEY, JSON.stringify(db));
+      }
+      window.google = {
+        script: {
+          run: new Proxy({}, {
+            get: function(_, prop) {
+              if (prop === 'withSuccessHandler') {
+                return function(onSuccess) {
+                  return {
+                    withFailureHandler: function(onFailure) {
+                      return new Proxy({}, {
+                        get: function(__, fnName) {
+                          return function(...args) {
+                            setTimeout(function() {
+                              try {
+                                const db = getMockDb();
+                                if (fnName === 'getInitialPublicData') {
+                                  const est = db.pajak.reduce((a, b) => a + Number(b.ESTIMASI_PAJAK || 0), 0);
+                                  const avg = db.ikm.length ? Number((db.ikm.reduce((a, b) => a + Number(b.TOTAL_NILAI || 0), 0) / db.ikm.length).toFixed(1)) : 0;
+                                  onSuccess({ success: true, message: 'OK', data: { wilayah: db.wilayah, summaryStats: { totalPajakDaerah: db.pajak.length, totalEstimasiPajak: est, totalPbb: db.pbb.length, totalIkm: db.ikm.length, avgIkm: avg } } });
+                                } else if (fnName === 'loginUser') {
+                                  const [u, p] = args;
+                                  if ((u === 'admin' && p === 'admin123') || (u === 'petugas' && p === 'petugas123')) {
+                                    const sessionObj = { sessionId: 'MOCK-SESSION-' + u, username: u, fullName: u === 'admin' ? 'Administrator Utama' : 'Petugas Lapangan', role: u === 'admin' ? 'ADMIN' : 'PETUGAS', expiresAt: new Date(Date.now() + 86400000).toISOString() };
+                                    localStorage.setItem('MOCK_ACTIVE_USER', JSON.stringify(sessionObj));
+                                    onSuccess({ success: true, message: 'Login berhasil!', data: sessionObj });
+                                  } else {
+                                    onSuccess({ success: false, message: 'Username atau password salah (Gunakan admin/admin123).', data: null });
+                                  }
+                                } else if (fnName === 'verifySession') {
+                                  const saved = localStorage.getItem('MOCK_ACTIVE_USER');
+                                  if (saved) onSuccess({ success: true, message: 'Valid', data: JSON.parse(saved) });
+                                  else onSuccess({ success: false, message: 'Sesi berakhir', data: null });
+                                } else if (fnName === 'logoutUser') {
+                                  localStorage.removeItem('MOCK_ACTIVE_USER');
+                                  onSuccess({ success: true, message: 'Berhasil logout.', data: null });
+                                } else if (fnName === 'submitPajakDaerah') {
+                                  const payload = args[0];
+                                  const est = Math.round(Number(payload.nilaiOmzet) * (Number(payload.persentase) / 100));
+                                  const rec = { ID: 'PJK-' + Date.now().toString().slice(-6), NAMA: payload.nama, KECAMATAN: payload.kecamatan, DESA: payload.desa, ALAMAT: payload.alamat, NILAI_OMZET: Number(payload.nilaiOmzet), PERSENTASE: Number(payload.persentase), ESTIMASI_PAJAK: est, TAHUN: payload.tahun, DOKUMENTASI_URL: payload.dokumentasiName ? 'Terlampir (' + payload.dokumentasiName + ')' : 'Tidak Ada Dokumentasi', TIMESTAMP: new Date().toISOString(), INPUT_BY: 'Publik/Petugas' };
+                                  db.pajak.push(rec);
+                                  saveMockDb(db);
+                                  onSuccess({ success: true, message: 'Data Potensi Pajak Daerah berhasil disimpan!', data: { id: rec.ID, estimasiPajak: est } });
+                                } else if (fnName === 'submitPbb') {
+                                  const payload = args[0];
+                                  const rec = { ID: 'PBB-' + Date.now().toString().slice(-6), NAMA: payload.nama, NIK: payload.nik, STATUS_NOP: payload.statusNop, NOMOR_NOP: payload.nomorNop || '-', KECAMATAN: payload.kecamatan, DESA: payload.desa, ALAMAT: payload.alamat, TAHUN: payload.tahun, DOKUMENTASI_URL: payload.dokumentasiName ? 'Terlampir (' + payload.dokumentasiName + ')' : 'Tidak Ada Dokumentasi', TIMESTAMP: new Date().toISOString(), INPUT_BY: 'Publik/Petugas' };
+                                  db.pbb.push(rec);
+                                  saveMockDb(db);
+                                  onSuccess({ success: true, message: 'Data PBB berhasil disimpan!', data: { id: rec.ID } });
+                                } else if (fnName === 'submitIkm') {
+                                  const payload = args[0];
+                                  const total = Number(payload.p1Nilai) + Number(payload.p2Nilai) + Number(payload.p3Nilai) + Number(payload.p4Nilai) + Number(payload.p5Nilai);
+                                  const grade = total >= 85 ? 'A (Sangat Baik)' : total >= 70 ? 'B (Baik)' : total >= 55 ? 'C (Cukup)' : 'D (Kurang Baik)';
+                                  const rec = { ID: 'IKM-' + Date.now().toString().slice(-6), NAMA: payload.nama, ALAMAT: payload.alamat, KEGIATAN: payload.kegiatan, P1_NILAI: payload.p1Nilai, P2_NILAI: payload.p2Nilai, P3_NILAI: payload.p3Nilai, P4_NILAI: payload.p4Nilai, P5_NILAI: payload.p5Nilai, TOTAL_NILAI: total, KATEGORI_MUTU: grade, SARAN: payload.saran || '-', TIMESTAMP: new Date().toISOString() };
+                                  db.ikm.push(rec);
+                                  saveMockDb(db);
+                                  onSuccess({ success: true, message: 'Survei IKM berhasil disimpan!', data: { id: rec.ID, totalNilai: total, kategoriMutu: grade } });
+                                } else if (fnName === 'getAdminDashboardData') {
+                                  const totalOmzet = db.pajak.reduce((a, b) => a + Number(b.NILAI_OMZET || 0), 0);
+                                  const totalEstimasiPajak = db.pajak.reduce((a, b) => a + Number(b.ESTIMASI_PAJAK || 0), 0);
+                                  const nopAdaCount = db.pbb.filter(x => x.STATUS_NOP === 'Ada').length;
+                                  const avgIkmScore = db.ikm.length ? Number((db.ikm.reduce((a, b) => a + Number(b.TOTAL_NILAI || 0), 0) / db.ikm.length).toFixed(1)) : 0;
+                                  onSuccess({
+                                    success: true,
+                                    message: 'OK',
+                                    data: {
+                                      pajakList: db.pajak.slice().reverse(),
+                                      pbbList: db.pbb.slice().reverse(),
+                                      ikmList: db.ikm.slice().reverse(),
+                                      wilayahList: db.wilayah,
+                                      usersList: db.users,
+                                      stats: {
+                                        totalPajakCount: db.pajak.length,
+                                        totalOmzet: totalOmzet,
+                                        totalEstimasiPajak: totalEstimasiPajak,
+                                        totalPbbCount: db.pbb.length,
+                                        nopAdaCount: nopAdaCount,
+                                        nopTidakCount: db.pbb.length - nopAdaCount,
+                                        totalIkmCount: db.ikm.length,
+                                        avgIkmScore: avgIkmScore,
+                                        avgIkmGrade: avgIkmScore >= 85 ? 'A (Sangat Baik)' : 'B (Baik)'
+                                      }
+                                    }
+                                  });
+                                } else if (fnName === 'updateRecordData') {
+                                  const [, type, payload] = args;
+                                  if (type === 'PAJAK_DAERAH') {
+                                    db.pajak = db.pajak.map(function(x) {
+                                      if (x.ID !== payload.id) return x;
+                                      const est = Math.round(Number(payload.nilaiOmzet) * (Number(payload.persentase) / 100));
+                                      return Object.assign({}, x, {
+                                        NAMA: payload.nama,
+                                        KECAMATAN: payload.kecamatan,
+                                        DESA: payload.desa,
+                                        ALAMAT: payload.alamat,
+                                        NILAI_OMZET: Number(payload.nilaiOmzet),
+                                        PERSENTASE: Number(payload.persentase),
+                                        ESTIMASI_PAJAK: est,
+                                        TAHUN: payload.tahun,
+                                        DOKUMENTASI_URL: payload.dokumentasiName ? 'Terlampir (' + payload.dokumentasiName + ')' : x.DOKUMENTASI_URL
+                                      });
+                                    });
+                                  } else if (type === 'PBB') {
+                                    db.pbb = db.pbb.map(function(x) {
+                                      if (x.ID !== payload.id) return x;
+                                      return Object.assign({}, x, {
+                                        NAMA: payload.nama,
+                                        NIK: payload.nik,
+                                        STATUS_NOP: payload.statusNop,
+                                        NOMOR_NOP: payload.statusNop === 'Ada' ? (payload.nomorNop || '-') : '-',
+                                        KECAMATAN: payload.kecamatan,
+                                        DESA: payload.desa,
+                                        ALAMAT: payload.alamat,
+                                        TAHUN: payload.tahun,
+                                        DOKUMENTASI_URL: payload.dokumentasiName ? 'Terlampir (' + payload.dokumentasiName + ')' : x.DOKUMENTASI_URL
+                                      });
+                                    });
+                                  } else if (type === 'IKM') {
+                                    db.ikm = db.ikm.map(function(x) {
+                                      if (x.ID !== payload.id) return x;
+                                      const total = Number(payload.p1Nilai) + Number(payload.p2Nilai) + Number(payload.p3Nilai) + Number(payload.p4Nilai) + Number(payload.p5Nilai);
+                                      const grade = total >= 85 ? 'A (Sangat Baik)' : total >= 70 ? 'B (Baik)' : total >= 55 ? 'C (Cukup)' : 'D (Kurang Baik)';
+                                      return Object.assign({}, x, {
+                                        NAMA: payload.nama,
+                                        ALAMAT: payload.alamat,
+                                        KEGIATAN: payload.kegiatan,
+                                        P1_NILAI: Number(payload.p1Nilai),
+                                        P2_NILAI: Number(payload.p2Nilai),
+                                        P3_NILAI: Number(payload.p3Nilai),
+                                        P4_NILAI: Number(payload.p4Nilai),
+                                        P5_NILAI: Number(payload.p5Nilai),
+                                        TOTAL_NILAI: total,
+                                        KATEGORI_MUTU: grade,
+                                        SARAN: payload.saran || '-'
+                                      });
+                                    });
+                                  }
+                                  saveMockDb(db);
+                                  onSuccess({ success: true, message: 'Data ' + payload.id + ' berhasil diperbarui!', data: { updatedId: payload.id } });
+                                } else if (fnName === 'deleteRecordData') {
+                                  const [, type, id] = args;
+                                  if (type === 'PAJAK_DAERAH') db.pajak = db.pajak.filter(x => x.ID !== id);
+                                  if (type === 'PBB') db.pbb = db.pbb.filter(x => x.ID !== id);
+                                  if (type === 'IKM') db.ikm = db.ikm.filter(x => x.ID !== id);
+                                  saveMockDb(db);
+                                  onSuccess({ success: true, message: 'Data berhasil dihapus.', data: { deletedId: id } });
+                                } else if (fnName === 'addWilayahData') {
+                                  const [, kec, desa] = args;
+                                  const item = { id: 'WIL-' + Date.now().toString().slice(-4), kecamatan: kec, desa: desa };
+                                  db.wilayah.push(item);
+                                  saveMockDb(db);
+                                  onSuccess({ success: true, message: 'Wilayah ditambahkan.', data: item });
+                                } else if (fnName === 'deleteWilayahData') {
+                                  const [, id] = args;
+                                  db.wilayah = db.wilayah.filter(x => x.id !== id);
+                                  saveMockDb(db);
+                                  onSuccess({ success: true, message: 'Wilayah dihapus.', data: { deletedId: id } });
+                                } else if (fnName === 'addNewUser') {
+                                  const [, u, , fn, r] = args;
+                                  db.users.push({ username: u, fullName: fn, role: r, status: 'ACTIVE' });
+                                  saveMockDb(db);
+                                  onSuccess({ success: true, message: 'Pengguna berhasil ditambahkan.', data: null });
+                                } else if (fnName === 'changeUserPassword') {
+                                  onSuccess({ success: true, message: 'Password berhasil diperbarui.', data: null });
+                                }
+                              } catch (e) {
+                                onFailure(e);
+                              }
+                            }, 280);
+                          };
+                        }
+                      });
+                    }
+                  };
+                };
+              }
+            }
+          })
+        }
+      };
+    }
+
+    // 2. UI HELPERS (Toast, Loading, Formatters)
+    function showLoading(text) {
+      document.getElementById('loadingText').textContent = text || 'Memproses data...';
+      document.getElementById('loadingOverlay').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+      document.getElementById('loadingOverlay').classList.add('hidden');
+    }
+
+    function showToast(message, type) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const isSuccess = type !== 'error';
+      toast.className = 'pointer-events-auto flex items-center gap-3 px-4 py-3.5 rounded-2xl shadow-xl border text-xs sm:text-sm font-bold transition-all duration-300 ' +
+        (isSuccess ? 'bg-slate-900 text-white border-slate-700' : 'bg-rose-600 text-white border-rose-500');
+      toast.innerHTML = '<span>' + (isSuccess ? '✅' : '⚠️') + '</span><span class="flex-1">' + escapeHtml(message) + '</span>';
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.opacity = '0';
+        setTimeout(function() { toast.remove(); }, 300);
+      }, 3800);
+    }
+
+    function formatRupiah(num) {
+      const n = Number(num) || 0;
+      return 'Rp ' + n.toLocaleString('id-ID');
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // 3. NAVIGATION & TAB SWITCHING
+    function switchMainView(viewName) {
+      const landing = document.getElementById('landingView');
+      const dashboard = document.getElementById('dashboardView');
+      const btnBack = document.getElementById('btnBackToForms');
+
+      if (viewName === 'DASHBOARD') {
+        landing.classList.add('hidden');
+        dashboard.classList.remove('hidden');
+        btnBack.classList.remove('hidden');
+        btnBack.classList.add('inline-flex');
+      } else {
+        dashboard.classList.add('hidden');
+        landing.classList.remove('hidden');
+        btnBack.classList.add('hidden');
+        btnBack.classList.remove('inline-flex');
+      }
+      lucide.createIcons();
+    }
+
+    function switchFormTab(tab) {
+      const tabs = ['Pajak', 'Pbb', 'Ikm'];
+      const keys = ['PAJAK', 'PBB', 'IKM'];
+      const activeClasses = {
+        PAJAK: 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20',
+        PBB: 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20',
+        IKM: 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-orange-500/20'
+      };
+
+      for (let i = 0; i < keys.length; i++) {
+        const k = keys[i];
+        const tName = tabs[i];
+        const btn = document.getElementById('tabBtn' + tName);
+        const icon = document.getElementById('tabIcon' + tName);
+        const container = document.getElementById('formContainer' + tName);
+
+        if (k === tab) {
+          btn.className = 'flex items-center gap-3 p-3.5 rounded-xl font-bold text-left transition-all ' + activeClasses[k];
+          icon.className = 'w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0';
+          container.classList.remove('hidden');
+        } else {
+          btn.className = 'flex items-center gap-3 p-3.5 rounded-xl font-bold text-left transition-all text-slate-600 hover:bg-slate-100';
+          icon.className = 'w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0';
+          container.classList.add('hidden');
+        }
+      }
+    }
+
+    function toggleRightDrawer(open) {
+      const drawer = document.getElementById('rightLoginDrawer');
+      const backdrop = document.getElementById('rightDrawerBackdrop');
+      if (open) {
+        backdrop.classList.remove('hidden');
+        setTimeout(function() {
+          backdrop.classList.remove('opacity-0');
+          drawer.classList.remove('translate-x-full');
+        }, 10);
+      } else {
+        backdrop.classList.add('opacity-0');
+        drawer.classList.add('translate-x-full');
+        setTimeout(function() {
+          backdrop.classList.add('hidden');
+        }, 320);
+      }
+    }
+
+    // 4. DYNAMIC KECAMATAN & DESA DROPDOWNS
+    function populateKecamatanDropdowns() {
+      const kecSet = new Set();
+      APP_STATE.wilayahList.forEach(function(item) {
+        if (item.kecamatan) kecSet.add(item.kecamatan);
+      });
+      const kecArray = Array.from(kecSet).sort();
+
+      const selects = ['pajakKecamatan', 'pbbKecamatan', 'editPajakKecamatan', 'editPbbKecamatan'];
+      selects.forEach(function(selectId) {
+        const el = document.getElementById(selectId);
+        if (!el) return;
+        const currentVal = el.value;
+        el.innerHTML = '<option value="">-- Pilih Kecamatan --</option>';
+        kecArray.forEach(function(kec) {
+          const opt = document.createElement('option');
+          opt.value = kec;
+          opt.textContent = kec;
+          el.appendChild(opt);
+        });
+        if (currentVal && kecArray.includes(currentVal)) {
+          el.value = currentVal;
+        }
+      });
+    }
+
+    function handleKecamatanChange(kecSelectId, desaSelectId) {
+      const selectedKec = document.getElementById(kecSelectId).value;
+      const desaSelect = document.getElementById(desaSelectId);
+      desaSelect.innerHTML = '';
+
+      if (!selectedKec) {
+        desaSelect.innerHTML = '<option value="">-- Pilih Kecamatan Terlebih Dahulu --</option>';
+        return;
+      }
+
+      const filteredDesa = APP_STATE.wilayahList
+        .filter(function(w) { return w.kecamatan === selectedKec; })
+        .map(function(w) { return w.desa; })
+        .sort();
+
+      desaSelect.innerHTML = '<option value="">-- Pilih Desa / Kelurahan --</option>';
+      filteredDesa.forEach(function(desa) {
+        const opt = document.createElement('option');
+        opt.value = desa;
+        opt.textContent = desa;
+        desaSelect.appendChild(opt);
+      });
+    }
+
+    // 5. FORM INTERACTIVITY (PAJAK ESTIMATE, NOP TOGGLE, IKM EMOTES)
+    function calculateLivePajakEstimate() {
+      const omzet = parseFloat(document.getElementById('pajakOmzet').value) || 0;
+      const persen = parseFloat(document.getElementById('pajakPersen').value) || 0;
+      const estimasi = Math.round(omzet * (persen / 100));
+      document.getElementById('pajakEstimasiPreview').textContent = formatRupiah(estimasi);
+    }
+
+    function handleNopStatusChange() {
+      const status = document.getElementById('pbbStatusNop').value;
+      const wrapper = document.getElementById('wrapperNomorNop');
+      const input = document.getElementById('pbbNomorNop');
+      if (status === 'Ada') {
+        wrapper.classList.remove('opacity-50');
+        input.disabled = false;
+        input.placeholder = 'Contoh: 32.01.010.001.002-0034.0';
+      } else {
+        wrapper.classList.add('opacity-50');
+        input.value = '';
+        input.disabled = true;
+        input.placeholder = 'Tidak diperlukan (Objek Belum Memiliki NOP)';
+      }
+    }
+
+    function selectIkmEmote(questionNumber, scoreValue, buttonEl) {
+      document.getElementById('ikmQ' + questionNumber).value = scoreValue;
+      document.getElementById('badgeScoreQ' + questionNumber).textContent = scoreValue + ' Poin';
+
+      const parentGrid = buttonEl.parentElement;
+      const buttons = parentGrid.querySelectorAll('.emote-card');
+      buttons.forEach(function(btn) {
+        btn.classList.remove('selected');
+      });
+      buttonEl.classList.add('selected');
+
+      updateLiveIkmTotal();
+    }
+
+    function updateLiveIkmTotal() {
+      let total = 0;
+      for (let i = 1; i <= 5; i++) {
+        total += parseInt(document.getElementById('ikmQ' + i).value, 10) || 0;
+      }
+      document.getElementById('liveIkmTotalBadge').textContent = total + ' / 100';
+    }
+
+    // 6. FILE & WEBRTC CAMERA HANDLING
+    function handleFileSelect(event, targetKey) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        APP_STATE.docs[targetKey] = {
+          base64: e.target.result,
+          name: file.name,
+          mime: file.type || 'image/jpeg'
+        };
+        renderDocPreview(targetKey, e.target.result, file.name);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderDocPreview(targetKey, dataUrl, fileName) {
+      const boxId = targetKey === 'PAJAK' ? 'previewBoxPajak' : 'previewBoxPbb';
+      const nameId = targetKey === 'PAJAK' ? 'fileNamePajak' : 'fileNamePbb';
+      document.getElementById(boxId).innerHTML = '<img src="' + dataUrl + '" class="w-full h-full object-cover" alt="Preview">';
+      document.getElementById(nameId).textContent = fileName;
+    }
+
+    function resetDocumentation(targetKey) {
+      APP_STATE.docs[targetKey] = { base64: '', name: '', mime: '' };
+      const boxId = targetKey === 'PAJAK' ? 'previewBoxPajak' : 'previewBoxPbb';
+      const nameId = targetKey === 'PAJAK' ? 'fileNamePajak' : 'fileNamePbb';
+      document.getElementById(boxId).innerHTML = '<i data-lucide="image" class="w-6 h-6 text-slate-400"></i>';
+      document.getElementById(nameId).textContent = 'Belum ada foto dipilih';
+      if (targetKey === 'PAJAK') {
+        document.getElementById('pajakEstimasiPreview').textContent = 'Rp 0';
+      }
+      lucide.createIcons();
+    }
+
+    function openCameraModal(targetKey) {
+      APP_STATE.activeCameraTarget = targetKey;
+      const modal = document.getElementById('cameraModal');
+      const video = document.getElementById('cameraVideoElement');
+      modal.classList.remove('hidden');
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToast('Browser Anda tidak mendukung akses kamera langsung. Gunakan tombol Pilih File.', 'error');
+        closeCameraModal();
+        return;
+      }
+
+      stopActiveCameraStream();
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+        .then(function(stream) {
+          APP_STATE.activeMediaStream = stream;
+          video.srcObject = stream;
+        })
+        .catch(function(err) {
+          showToast('Gagal mengakses kamera: ' + err.message, 'error');
+          closeCameraModal();
+        });
+    }
+
+    function stopActiveCameraStream() {
+      if (APP_STATE.activeMediaStream) {
+        APP_STATE.activeMediaStream.getTracks().forEach(function(track) {
+          track.stop();
+        });
+        APP_STATE.activeMediaStream = null;
+      }
+    }
+
+    function closeCameraModal() {
+      stopActiveCameraStream();
+      document.getElementById('cameraModal').classList.add('hidden');
+    }
+
+    function captureCameraFrame() {
+      const video = document.getElementById('cameraVideoElement');
+      const canvas = document.getElementById('cameraCanvasElement');
+      if (!video.videoWidth) {
+        showToast('Kamera belum siap, tunggu sesaat.', 'error');
+        return;
+      }
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      const fileName = 'kamera_' + Date.now() + '.jpg';
+
+      const targetKey = APP_STATE.activeCameraTarget || 'PAJAK';
+      APP_STATE.docs[targetKey] = {
+        base64: dataUrl,
+        name: fileName,
+        mime: 'image/jpeg'
+      };
+      renderDocPreview(targetKey, dataUrl, fileName);
+      closeCameraModal();
+      showToast('Foto dokumentasi berhasil diambil!', 'success');
+    }
+
+    // 7. FORM SUBMISSIONS TO BACKEND (google.script.run)
+    function handlePajakSubmit(e) {
+      e.preventDefault();
+      const payload = {
+        nama: document.getElementById('pajakNama').value,
+        kecamatan: document.getElementById('pajakKecamatan').value,
+        desa: document.getElementById('pajakDesa').value,
+        alamat: document.getElementById('pajakAlamat').value,
+        nilaiOmzet: document.getElementById('pajakOmzet').value,
+        persentase: document.getElementById('pajakPersen').value,
+        tahun: document.getElementById('pajakTahun').value,
+        dokumentasiBase64: APP_STATE.docs.PAJAK.base64,
+        dokumentasiName: APP_STATE.docs.PAJAK.name,
+        dokumentasiMime: APP_STATE.docs.PAJAK.mime,
+        sessionId: localStorage.getItem(APP_STATE.sessionKey) || ''
+      };
+
+      showLoading('Menyimpan data Potensi Pajak Daerah...');
+      google.script.run
+        .withSuccessHandler(function(res) {
+          hideLoading();
+          if (res && res.success) {
+            showToast(res.message, 'success');
+            document.getElementById('formPajakDaerah').reset();
+            resetDocumentation('PAJAK');
+            loadInitialPublicData();
+          } else {
+            showToast((res && res.message) || 'Gagal menyimpan data.', 'error');
+          }
+        })
+        .withFailureHandler(function(err) {
+          hideLoading();
+          showToast('Error Server: ' + err.message, 'error');
+        })
+        .submitPajakDaerah(payload);
+    }
+
+    function handlePbbSubmit(e) {
+      e.preventDefault();
+      const payload = {
+        nama: document.getElementById('pbbNama').value,
+        nik: document.getElementById('pbbNik').value,
+        statusNop: document.getElementById('pbbStatusNop').value,
+        nomorNop: document.getElementById('pbbNomorNop').value,
+        kecamatan: document.getElementById('pbbKecamatan').value,
+        desa: document.getElementById('pbbDesa').value,
+        alamat: document.getElementById('pbbAlamat').value,
+        tahun: document.getElementById('pbbTahun').value,
+        dokumentasiBase64: APP_STATE.docs.PBB.base64,
+        dokumentasiName: APP_STATE.docs.PBB.name,
+        dokumentasiMime: APP_STATE.docs.PBB.mime,
+        sessionId: localStorage.getItem(APP_STATE.sessionKey) || ''
+      };
+
+      showLoading('Menyimpan data PBB...');
+      google.script.run
+        .withSuccessHandler(function(res) {
+          hideLoading();
+          if (res && res.success) {
+            showToast(res.message, 'success');
+            document.getElementById('formPbb').reset();
+            resetDocumentation('PBB');
+            handleNopStatusChange();
+            loadInitialPublicData();
+          } else {
+            showToast((res && res.message) || 'Gagal menyimpan data PBB.', 'error');
+          }
+        })
+        .withFailureHandler(function(err) {
+          hideLoading();
+          showToast('Error Server: ' + err.message, 'error');
+        })
+        .submitPbb(payload);
+    }
+
+    function handleIkmSubmit(e) {
+      e.preventDefault();
+      const payload = {
+        nama: document.getElementById('ikmNama').value,
+        alamat: document.getElementById('ikmAlamat').value,
+        kegiatan: document.getElementById('ikmKegiatan').value,
+        p1Nilai: document.getElementById('ikmQ1').value,
+        p2Nilai: document.getElementById('ikmQ2').value,
+        p3Nilai: document.getElementById('ikmQ3').value,
+        p4Nilai: document.getElementById('ikmQ4').value,
+        p5Nilai: document.getElementById('ikmQ5').value,
+        saran: document.getElementById('ikmSaran').value
+      };
+
+      showLoading('Mengirim survei kepuasan masyarakat (IKM)...');
+      google.script.run
+        .withSuccessHandler(function(res) {
+          hideLoading();
+          if (res && res.success) {
+            showToast(res.message, 'success');
+            document.getElementById('formIkm').reset();
+            loadInitialPublicData();
+          } else {
+            showToast((res && res.message) || 'Gagal mengirim survei IKM.', 'error');
+          }
+        })
+        .withFailureHandler(function(err) {
+          hideLoading();
+          showToast('Error Server: ' + err.message, 'error');
+        })
+        .submitIkm(payload);
+    }
+
+    // 8. AUTHENTICATION & PERSISTENT SESSION
+    function fillQuickLogin(user, pass) {
+      document.getElementById('loginUsername').value = user;
+      document.getElementById('loginPassword').value = pass;
+    }
+
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      const username = document.getElementById('loginUsername').value;
+      const password = document.getElementById('loginPassword').value;
+
+      showLoading('Memverifikasi kredensial login...');
+      google.script.run
+        .withSuccessHandler(function(res) {
+          hideLoading();
+          if (res && res.success && res.data) {
+            localStorage.setItem(APP_STATE.sessionKey, res.data.sessionId);
+            applyAuthenticatedUI(res.data);
+            showToast(res.message, 'success');
+            document.getElementById('formLoginRight').reset();
+          } else {
+            showToast((res && res.message) || 'Login gagal.', 'error');
+          }
+        })
+        .withFailureHandler(function(err) {
+          hideLoading();
+          showToast('Gagal login: ' + err.message, 'error');
+        })
+        .loginUser(username, password);
+    }
+
+    function checkPersistentSession() {
+      const savedSessionId = localStorage.getItem(APP_STATE.sessionKey);
+      if (!savedSessionId) {
+        applyGuestUI();
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.success && res.data) {
+            applyAuthenticatedUI(res.data);
+          } else {
+            localStorage.removeItem(APP_STATE.sessionKey);
+            applyGuestUI();
+          }
+        })
+        .withFailureHandler(function() {
+          applyGuestUI();
+        })
+        .verifySession(savedSessionId);
+    }
+
+    function applyAuthenticatedUI(userData) {
+      APP_STATE.currentUser = userData;
+      document.getElementById('drawerGuestSection').classList.add('hidden');
+      document.getElementById('drawerAuthSection').classList.remove('hidden');
+
+      document.getElementById('authFullName').textContent = userData.fullName || userData.username;
+      document.getElementById('authUsername').textContent = '@' + userData.username;
+      document.getElementById('authRoleBadge').textContent = userData.role || 'PETUGAS';
+      document.getElementById('authAvatarInitial').textContent = String(userData.fullName || userData.username).charAt(0).toUpperCase();
+
+      document.getElementById('navLoginLabel').textContent = userData.fullName.split(' ')[0];
+      document.getElementById('navStatusDot').className = 'w-2 h-2 rounded-full bg-emerald-400';
+
+      const btnDashTop = document.getElementById('btnOpenDashboardTop');
+      btnDashTop.classList.remove('hidden');
+      btnDashTop.classList.add('inline-flex');
+    }
+
+    function applyGuestUI() {
+      APP_STATE.currentUser = null;
+      document.getElementById('drawerGuestSection').classList.remove('hidden');
+      document.getElementById('drawerAuthSection').classList.add('hidden');
+      document.getElementById('navLoginLabel').textContent = 'Menu Login';
+      document.getElementById('navStatusDot').className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+
+      const btnDashTop = document.getElementById('btnOpenDashboardTop');
+      btnDashTop.classList.add('hidden');
+      btnDashTop.classList.remove('inline-flex');
+      switchMainView('LANDING');
+    }
+
+    function handleLogout() {
+      const sessionId = localStorage.getItem(APP_STATE.sessionKey) || '';
+      showLoading('Keluar dari sesi...');
+      google.script.run
+        .withSuccessHandler(function() {
+          hideLoading();
+          localStorage.removeItem(APP_STATE.sessionKey);
+          applyGuestUI();
+          toggleRightDrawer(false);
+          showToast('Anda telah berhasil logout.', 'success');
+        })
+        .withFailureHandler(function() {
+          hideLoading();
+          localStorage.removeItem(APP_STATE.sessionKey);
+          applyGuestUI();
+        })
+        .logoutUser(sessionId);
+    }
+
+    function handleChangePassword(e) {
+      e.preventDefault();
+      const sessionId = localStorage.getItem(APP_STATE.sessionKey) || '';
+      const oldPass = document.getElementById('oldPasswordInput').value;
+      const newPass = document.getElementById('newPasswordInput').value;
+
+      showLoading('Memperbarui password...');
+      google.script.run
+        .withSuccessHandler(function(res) {
+          hideLoading();
+          if (res && res.success) {
+            showToast(res.message, 'success');
+            document.getElementById('formChangePass').reset();
+          } else {
+            showToast((res && res.message) || 'Gagal mengubah password.', 'error');
+          }
+        })
+        .withFailureHandler(function(err) {
+          hideLoading();
+          showToast('Error: ' + err.message, 'error');
+        })
+        .changeUserPassword(sessionId, oldPass, newPass);
+    }
+
+    // 9. ADMIN DASHBOARD & CRUD OPERATIONS
+    function openAdminDashboard() {
+      if (!APP_STATE.currentUser) {
+        toggleRightDrawer(true);
+        showToast('Silakan login terlebih dahulu melalui panel di sebelah kanan.', 'error');
+        return;
+      }
+      switchMainView('DASHBOARD');
+      loadDashboardData();
+    }
+
+    function switchDashSubTab(subTab) {
+      APP_STATE.activeDashSubTab = subTab;
+      const mapping = {
+        PAJAK: { btn: 'dashSubTabPajak', panel: 'dashPanelPajak' },
+        PBB: { btn: 'dashSubTabPbb', panel: 'dashPanelPbb' },
+        IKM: { btn: 'dashSubTabIkm', panel: 'dashPanelIkm' },
+        WILAYAH: { btn: 'dashSubTabWilayah', panel: 'dashPanelWilayah' },
+        USERS: { btn: 'dashSubTabUsers', panel: 'dashPanelUsers' }
+      };
+      Object.keys(mapping).forEach(function(k) {
+        const btn = document.getElementById(mapping[k].btn);
+        const panel = document.getElementById(mapping[k].panel);
+        if (k === subTab) {
+          btn.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 text-white';
+          panel.classList.remove('hidden');
+        } else {
+          btn.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-200/70';
+          panel.classList.add('hidden');
+        }
+      });
+    }
+
+    function loadDashboardData() {
+      const sessionId = localStorage.getItem(APP_STATE.sessionKey) || '';
+      const period = document.getElementById('filterReportPeriod').value || 'ALL';
+
+      showLoading('Memuat data dashboard & laporan...');
+      google.script.run
+        .withSuccessHandler(function(res) {
+          hideLoading();
+          if (res && res.success && res.data) {
+            APP_STATE.dashboardCache = res.data;
+            APP_STATE.wilayahList = res.data.wilayahList || APP_STATE.wilayahList;
+            populateKecamatanDropdowns();
+
+            const st = res.data.stats;
+            document.getElementById('dashKpiPajakCount').textContent = st.totalPajakCount + ' Data';
+            document.getElementById('dashKpiOmzetTotal').textContent = 'Total Omzet: ' + formatRupiah(st.totalOmzet);
+            document.getElementById('dashKpiEstimasi').textContent = formatRupiah(st.totalEstimasiPajak);
+            document.getElementById('dashKpiPbbCount').textContent = st.totalPbbCount + ' Objek';
+            document.getElementById('dashKpiPbbNop').textContent = 'NOP Ada: ' + st.nopAdaCount + ' • Belum: ' + st.nopTidakCount;
+            document.getElementById('dashKpiIkmAvg').textContent = st.avgIkmScore + ' / 100';
+            document.getElementById('dashKpiIkmGrade').textContent = 'Mutu: ' + st.avgIkmGrade;
+
+            renderDashboardTables();
+          } else {
+            showToast((res && res.message) || 'Gagal memuat dashboard.', 'error');
+          }
+        })
+        .withFailureHandler(function(err) {
+          hideLoading();
+          showToast('Error memuat dashboard: ' + err.message, 'error');
+        })
+        .getAdminDashboardData(sessionId, period);
+    }
+
+    function renderDashboardTables() {
+      // 1. Render Pajak Daerah
+      const qPajak = (document.getElementById('searchPajakInput').value || '').toLowerCase();
+      const pajakRows = (APP_STATE.dashboardCache.pajakList || []).filter(function(r) {
+        return !qPajak ||
+          String(r.NAMA).toLowerCase().includes(qPajak) ||
+          String(r.KECAMATAN).toLowerCase().includes(qPajak) ||
+          String(r.DESA).toLowerCase().includes(qPajak);
+      });
+      const tbodyPajak = document.getElementById('tbodyPajakDaerah');
+      tbodyPajak.innerHTML = pajakRows.length === 0
+        ? '<tr><td colspan="7" class="py-8 text-center text-slate-400">Belum ada data Potensi Pajak Daerah.</td></tr>'
+        : pajakRows.map(function(r) {
+            const docLink = String(r.DOKUMENTASI_URL || '').startsWith('http')
+              ? '<a href="' + escapeHtml(r.DOKUMENTASI_URL) + '" target="_blank" class="text-indigo-600 font-bold hover:underline">Lihat Foto</a>'
+              : '<span class="text-slate-500">' + escapeHtml(r.DOKUMENTASI_URL) + '</span>';
+            return '<tr class="hover:bg-slate-50/80">' +
+              '<td class="py-3 px-4"><div class="font-bold text-slate-800">' + escapeHtml(r.ID) + '</div><div class="text-xs text-slate-400">Tahun ' + escapeHtml(r.TAHUN) + '</div></td>' +
+              '<td class="py-3 px-4 font-bold text-slate-900">' + escapeHtml(r.NAMA) + '</td>' +
+              '<td class="py-3 px-4"><div class="font-semibold text-slate-700">' + escapeHtml(r.KECAMATAN) + ' - ' + escapeHtml(r.DESA) + '</div><div class="text-xs text-slate-500">' + escapeHtml(r.ALAMAT) + '</div></td>' +
+              '<td class="py-3 px-4"><div>' + formatRupiah(r.NILAI_OMZET) + '</div><span class="text-xs font-bold text-indigo-600">Tarif ' + escapeHtml(r.PERSENTASE) + '%</span></td>' +
+              '<td class="py-3 px-4 font-extrabold text-emerald-600">' + formatRupiah(r.ESTIMASI_PAJAK) + '</td>' +
+              '<td class="py-3 px-4 text-xs">' + docLink + '</td>' +
+              '<td class="py-3 px-4 text-right whitespace-nowrap space-x-1.5">' +
+                '<button onclick="openEditModal(\'PAJAK_DAERAH\', \'' + escapeHtml(r.ID) + '\')" class="px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-xs font-bold transition">Edit</button>' +
+                '<button onclick="handleDeleteRecord(\'PAJAK_DAERAH\', \'' + escapeHtml(r.ID) + '\')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold transition">Hapus</button>' +
+              '</td>' +
+              '</tr>';
+          }).join('');
+
+      // 2. Render PBB
+      const qPbb = (document.getElementById('searchPbbInput').value || '').toLowerCase();
+      const pbbRows = (APP_STATE.dashboardCache.pbbList || []).filter(function(r) {
+        return !qPbb ||
+          String(r.NAMA).toLowerCase().includes(qPbb) ||
+          String(r.NIK).toLowerCase().includes(qPbb) ||
+          String(r.DESA).toLowerCase().includes(qPbb);
+      });
+      const tbodyPbb = document.getElementById('tbodyPbb');
+      tbodyPbb.innerHTML = pbbRows.length === 0
+        ? '<tr><td colspan="7" class="py-8 text-center text-slate-400">Belum ada data PBB.</td></tr>'
+        : pbbRows.map(function(r) {
+            const docLink = String(r.DOKUMENTASI_URL || '').startsWith('http')
+              ? '<a href="' + escapeHtml(r.DOKUMENTASI_URL) + '" target="_blank" class="text-emerald-600 font-bold hover:underline">Lihat Foto</a>'
+              : '<span class="text-slate-500">' + escapeHtml(r.DOKUMENTASI_URL) + '</span>';
+            return '<tr class="hover:bg-slate-50/80">' +
+              '<td class="py-3 px-4"><div class="font-bold text-slate-800">' + escapeHtml(r.ID) + '</div><div class="text-xs text-slate-400">Tahun ' + escapeHtml(r.TAHUN) + '</div></td>' +
+              '<td class="py-3 px-4"><div class="font-bold text-slate-900">' + escapeHtml(r.NAMA) + '</div><div class="text-xs font-mono text-slate-500">NIK: ' + escapeHtml(String(r.NIK).replace(/^'/, '')) + '</div></td>' +
+              '<td class="py-3 px-4"><span class="px-2 py-0.5 rounded-md text-xs font-bold ' + (r.STATUS_NOP === 'Ada' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700') + '">' + escapeHtml(r.STATUS_NOP) + '</span><div class="text-xs text-slate-400 mt-0.5">' + escapeHtml(r.NOMOR_NOP) + '</div></td>' +
+              '<td class="py-3 px-4 font-semibold text-slate-700">' + escapeHtml(r.KECAMATAN) + ' - ' + escapeHtml(r.DESA) + '</td>' +
+              '<td class="py-3 px-4 text-xs text-slate-600">' + escapeHtml(r.ALAMAT) + '</td>' +
+              '<td class="py-3 px-4 text-xs">' + docLink + '</td>' +
+              '<td class="py-3 px-4 text-right whitespace-nowrap space-x-1.5">' +
+                '<button onclick="openEditModal(\'PBB\', \'' + escapeHtml(r.ID) + '\')" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition">Edit</button>' +
+                '<button onclick="handleDeleteRecord(\'PBB\', \'' + escapeHtml(r.ID) + '\')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold transition">Hapus</button>' +
+              '</td>' +
+              '</tr>';
+          }).join('');
+
+      // 3. Render IKM
+      const qIkm = (document.getElementById('searchIkmInput').value || '').toLowerCase();
+      const ikmRows = (APP_STATE.dashboardCache.ikmList || []).filter(function(r) {
+        return !qIkm ||
+          String(r.NAMA).toLowerCase().includes(qIkm) ||
+          String(r.KEGIATAN).toLowerCase().includes(qIkm);
+      });
+      const tbodyIkm = document.getElementById('tbodyIkm');
+      tbodyIkm.innerHTML = ikmRows.length === 0
+        ? '<tr><td colspan="7" class="py-8 text-center text-slate-400">Belum ada responden IKM.</td></tr>'
+        : ikmRows.map(function(r) {
+            return '<tr class="hover:bg-slate-50/80">' +
+              '<td class="py-3 px-4"><div class="font-bold text-slate-800">' + escapeHtml(r.ID) + '</div><div class="text-[11px] text-slate-400">' + escapeHtml(String(r.TIMESTAMP).slice(0, 10)) + '</div></td>' +
+              '<td class="py-3 px-4"><div class="font-bold text-slate-900">' + escapeHtml(r.NAMA) + '</div><div class="text-xs text-slate-500">' + escapeHtml(r.ALAMAT) + '</div></td>' +
+              '<td class="py-3 px-4 font-medium text-slate-700">' + escapeHtml(r.KEGIATAN) + '</td>' +
+              '<td class="py-3 px-4 text-xs font-mono text-slate-600">[' + [r.P1_NILAI, r.P2_NILAI, r.P3_NILAI, r.P4_NILAI, r.P5_NILAI].join(', ') + ']</td>' +
+              '<td class="py-3 px-4"><span class="font-extrabold text-indigo-600">' + escapeHtml(r.TOTAL_NILAI) + '</span> <span class="text-xs text-slate-500">(' + escapeHtml(r.KATEGORI_MUTU) + ')</span></td>' +
+              '<td class="py-3 px-4 text-xs text-slate-500">' + escapeHtml(r.SARAN) + '</td>' +
+              '<td class="py-3 px-4 text-right whitespace-nowrap space-x-1.5">' +
+                '<button onclick="openEditModal(\'IKM\', \'' + escapeHtml(r.ID) + '\')" class="px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 text-xs font-bold transition">Edit</button>' +
+                '<button onclick="handleDeleteRecord(\'IKM\', \'' + escapeHtml(r.ID) + '\')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold transition">Hapus</button>' +
+              '</td>' +
+              '</tr>';
+          }).join('');
+
+      // 4. Render Wilayah
+      const tbodyWil = document.getElementById('tbodyWilayah');
+      const wilRows = APP_STATE.dashboardCache.wilayahList || [];
+      tbodyWil.innerHTML = wilRows.map(function(w) {
+        return '<tr class="hover:bg-slate-50">' +
+          '<td class="py-2.5 px-4 font-mono text-xs text-slate-500">' + escapeHtml(w.id) + '</td>' +
+          '<td class="py-2.5 px-4 font-bold text-slate-800">' + escapeHtml(w.kecamatan) + '</td>' +
+          '<td class="py-2.5 px-4 text-slate-700">' + escapeHtml(w.desa) + '</td>' +
+          '<td class="py-2.5 px-4 text-right"><button onclick="handleDeleteWilayah(\'' + escapeHtml(w.id) + '\')" class="text-xs font-bold text-rose-600 hover:underline">Hapus</button></td>' +
+          '</tr>';
+      }).join('');
+
+      // 5. Render Users
+      const tbodyUsers = document.getElementById('tbodyUsers');
+      const userRows = APP_STATE.dashboardCache.usersList || [];
+      tbodyUsers.innerHTML = userRows.map(function(u) {
+        return '<tr class="hover:bg-slate-50">' +
+          '<td class="py-2.5 px-4 font-bold text-slate-800">' + escapeHtml(u.username) + '</td>' +
+          '<td class="py-2.5 px-4 text-slate-700">' + escapeHtml(u.fullName) + '</td>' +
+          '<td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-xs font-bold">' + escapeHtml(u.role) + '</span></td>' +
+          '<td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-xs font-bold">' + escapeHtml(u.status) + '</span></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    function handleDeleteRecord(type, recordId) {
+      const sessionId = localStorage.getItem(APP_STATE.sessionKey) || '';
+      showLoading('Menghapus data ' + recordId + '...');
+      google.script.run
+        .withSuccessHandler(function(res) {
+          hideLoading();
+          if (res && res.success) {
+            showToast(res.message, 'success');
+            loadDashboardData();
+            loadInitialPublicData();
+          } else {
+            showToast((res && res.message) || 'Gagal menghapus data.', 'error');
+          }
+        })
+        .withFailureHandler(function(err) {
+          hideLoading();
+          showToast('Error: ' + err.message, 'error');
+        })
+        .deleteRecordData(sessionId, type, recordId);
+    }
+
+    function handleAddWilayah(e) {
+      e.preventDefault();
+      const sessionId = localStorage.getItem(APP_STATE.sessionKey) || '';
+      const kec = document.getElementById('newWilayahKecamatan').value;
+      const desa = document.getElementById('newWilayahDesa').value;
+
+      showLoading('Menambahkan wilayah baru...');
+      google.script.run
+        .withSuccessHandler(function(res) {
+          hideLoading();
+          if (res && res.success) {
+            showToast(res.message, 'success');
+            document.getElementById('newWilayahKecamatan').value = '';
+            document.getElementById('newWilayahDesa').value = '';
+            loadDashboardData();
+          } else {
+            showToast((res && res.message) || 'Gagal menambah wilayah.', 'error');
+          }
+        })
+        .withFailureHandler(function(err) {
+          hideLoading();
+          showToast('Error: ' + err.message, 'error');
+        })
+        .addWilayahData(sessionId, kec, desa);
+    }
+
+    function handleDeleteWilayah(wilayahId) {
+      const sessionId = localStorage.getItem(APP_STATE.sessionKey) || '';
+      showLoading('Menghapus wilayah...');
+      google.script.run
+        .withSuccessHandler(function(res) {
+          hideLoading();
+          if (res && res.success) {
+            showToast(res.message, 'success');
+            loadDashboardData();
+          } else {
+            showToast((res && res.message) || 'Gagal menghapus wilayah.', 'error');
+          }
+        })
+        .withFailureHandler(function(err) {
+          hideLoading();
+          showToast('Error: ' + err.message, 'error');
+        })
+        .deleteWilayahData(sessionId, wilayahId);
+    }
+
+    function handleAddUser(e) {
+      e.preventDefault();
+      const sessionId = localStorage.getItem(APP_STATE.sessionKey) || '';
+      const username = document.getElementById('newUserUsername').value;
+      const fullName = document.getElementById('newUserFullName').value;
+      const password = document.getElementById('newUserPassword').value;
+      const role = document.getElementById('newUserRole').value;
+
+      showLoading('Menambahkan pengguna baru...');
+      google.script.run
+        .withSuccessHandler(function(res) {
+          hideLoading();
+          if (res && res.success) {
+            showToast(res.message, 'success');
+            document.getElementById('newUserUsername').value = '';
+            document.getElementById('newUserFullName').value = '';
+            document.getElementById('newUserPassword').value = '';
+            loadDashboardData();
+          } else {
+            showToast((res && res.message) || 'Gagal menambah pengguna.', 'error');
+          }
+        })
+        .withFailureHandler(function(err) {
+          hideLoading();
+          showToast('Error: ' + err.message, 'error');
+        })
+        .addNewUser(sessionId, username, password, fullName, role);
+    }
+
+    // 9B. FITUR AKSI EDIT DATA (MODAL & UPDATE HANDLER)
+    function handleEditFileSelect(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        APP_STATE.docs.EDIT = {
+          base64: e.target.result,
+          name: file.name,
+          mime: file.type || 'image/jpeg'
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function calculateEditPajakEstimate() {
+      const omzet = parseFloat(document.getElementById('editPajakOmzet').value) || 0;
+      const persen = parseFloat(document.getElementById('editPajakPersen').value) || 0;
+      const est = Math.round(omzet * (persen / 100));
+      document.getElementById('editPajakEstimasiPreview').textContent = formatRupiah(est);
+    }
+
+    function handleEditNopStatusChange() {
+      const status = document.getElementById('editPbbStatusNop').value;
+      const input = document.getElementById('editPbbNomorNop');
+      if (status === 'Ada') {
+        input.disabled = false;
+        input.classList.remove('bg-slate-100');
+      } else {
+        input.value = '-';
+        input.disabled = true;
+        input.classList.add('bg-slate-100');
+      }
+    }
+
+    function calculateEditIkmPreview() {
+      const p1 = parseInt(document.getElementById('editIkmP1').value, 10) || 0;
+      const p2 = parseInt(document.getElementById('editIkmP2').value, 10) || 0;
+      const p3 = parseInt(document.getElementById('editIkmP3').value, 10) || 0;
+      const p4 = parseInt(document.getElementById('editIkmP4').value, 10) || 0;
+      const p5 = parseInt(document.getElementById('editIkmP5').value, 10) || 0;
+      const total = p1 + p2 + p3 + p4 + p5;
+      const grade = total >= 85 ? 'A (Sangat Baik)' : total >= 70 ? 'B (Baik)' : total >= 55 ? 'C (Cukup)' : 'D (Kurang Baik)';
+      document.getElementById('editIkmTotalPreview').textContent = total + ' (' + grade + ')';
+    }
+
+    function openEditModal(type, recordId) {
+      populateKecamatanDropdowns();
+      APP_STATE.docs.EDIT = { base64: '', name: '', mime: '' };
+      document.getElementById('editRecordType').value = type;
+      document.getElementById('editRecordId').value = recordId;
+      document.getElementById('editModalSubtitle').textContent = 'ID Rekaman: ' + recordId;
+
+      document.getElementById('editFieldsPajak').classList.add('hidden');
+      document.getElementById('editFieldsPbb').classList.add('hidden');
+      document.getElementById('editFieldsIkm').classList.add('hidden');
+
+      if (type === 'PAJAK_DAERAH') {
+        const rec = (APP_STATE.dashboardCache.pajakList || []).find(function(x) { return String(x.ID) === String(recordId); });
+        if (!rec) {
+          showToast('Data Pajak Daerah tidak ditemukan.', 'error');
+          return;
+        }
+        document.getElementById('editModalTitle').textContent = 'Edit Data Potensi Pajak Daerah';
+        document.getElementById('editFieldsPajak').classList.remove('hidden');
+
+        document.getElementById('editPajakNama').value = rec.NAMA || '';
+        document.getElementById('editPajakKecamatan').value = rec.KECAMATAN || '';
+        handleKecamatanChange('editPajakKecamatan', 'editPajakDesa');
+        document.getElementById('editPajakDesa').value = rec.DESA || '';
+        document.getElementById('editPajakAlamat').value = rec.ALAMAT || '';
+        document.getElementById('editPajakOmzet').value = rec.NILAI_OMZET || 0;
+        document.getElementById('editPajakPersen').value = String(rec.PERSENTASE || '10');
+        document.getElementById('editPajakTahun').value = String(rec.TAHUN || '2026');
+        document.getElementById('editPajakFile').value = '';
+        calculateEditPajakEstimate();
+      } else if (type === 'PBB') {
+        const rec = (APP_STATE.dashboardCache.pbbList || []).find(function(x) { return String(x.ID) === String(recordId); });
+        if (!rec) {
+          showToast('Data PBB tidak ditemukan.', 'error');
+          return;
+        }
+        document.getElementById('editModalTitle').textContent = 'Edit Data Pendataan PBB';
+        document.getElementById('editFieldsPbb').classList.remove('hidden');
+
+        document.getElementById('editPbbNama').value = rec.NAMA || '';
+        document.getElementById('editPbbNik').value = String(rec.NIK || '').replace(/^'/, '');
+        document.getElementById('editPbbStatusNop').value = rec.STATUS_NOP || 'Ada';
+        document.getElementById('editPbbNomorNop').value = rec.NOMOR_NOP || '-';
+        handleEditNopStatusChange();
+        document.getElementById('editPbbKecamatan').value = rec.KECAMATAN || '';
+        handleKecamatanChange('editPbbKecamatan', 'editPbbDesa');
+        document.getElementById('editPbbDesa').value = rec.DESA || '';
+        document.getElementById('editPbbTahun').value = String(rec.TAHUN || '2026');
+        document.getElementById('editPbbAlamat').value = rec.ALAMAT || '';
+        document.getElementById('editPbbFile').value = '';
+      } else if (type === 'IKM') {
+        const rec = (APP_STATE.dashboardCache.ikmList || []).find(function(x) { return String(x.ID) === String(recordId); });
+        if (!rec) {
+          showToast('Data IKM tidak ditemukan.', 'error');
+          return;
+        }
+        document.getElementById('editModalTitle').textContent = 'Edit Survei Kepuasan Masyarakat (IKM)';
+        document.getElementById('editFieldsIkm').classList.remove('hidden');
+
+        document.getElementById('editIkmNama').value = rec.NAMA || '';
+        document.getElementById('editIkmAlamat').value = rec.ALAMAT || '';
+        document.getElementById('editIkmKegiatan').value = rec.KEGIATAN || '';
+        document.getElementById('editIkmP1').value = String(rec.P1_NILAI || '20');
+        document.getElementById('editIkmP2').value = String(rec.P2_NILAI || '20');
+        document.getElementById('editIkmP3').value = String(rec.P3_NILAI || '20');
+        document.getElementById('editIkmP4').value = String(rec.P4_NILAI || '20');
+        document.getElementById('editIkmP5').value = String(rec.P5_NILAI || '20');
+        document.getElementById('editIkmSaran').value = rec.SARAN || '';
+        calculateEditIkmPreview();
+      }
+
+      document.getElementById('editRecordModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeEditModal() {
+      document.getElementById('editRecordModal').classList.add('hidden');
+      APP_STATE.docs.EDIT = { base64: '', name: '', mime: '' };
+    }
+
+    function handleUpdateRecordSubmit(e) {
+      e.preventDefault();
+      const sessionId = localStorage.getItem(APP_STATE.sessionKey) || '';
+      const type = document.getElementById('editRecordType').value;
+      const id = document.getElementById('editRecordId').value;
+
+      let payload = { id: id };
+
+      if (type === 'PAJAK_DAERAH') {
+        payload.nama = document.getElementById('editPajakNama').value;
+        payload.kecamatan = document.getElementById('editPajakKecamatan').value;
+        payload.desa = document.getElementById('editPajakDesa').value;
+        payload.alamat = document.getElementById('editPajakAlamat').value;
+        payload.nilaiOmzet = document.getElementById('editPajakOmzet').value;
+        payload.persentase = document.getElementById('editPajakPersen').value;
+        payload.tahun = document.getElementById('editPajakTahun').value;
+        payload.dokumentasiBase64 = APP_STATE.docs.EDIT.base64;
+        payload.dokumentasiName = APP_STATE.docs.EDIT.name;
+        payload.dokumentasiMime = APP_STATE.docs.EDIT.mime;
+      } else if (type === 'PBB') {
+        payload.nama = document.getElementById('editPbbNama').value;
+        payload.nik = document.getElementById('editPbbNik').value;
+        payload.statusNop = document.getElementById('editPbbStatusNop').value;
+        payload.nomorNop = document.getElementById('editPbbNomorNop').value;
+        payload.kecamatan = document.getElementById('editPbbKecamatan').value;
+        payload.desa = document.getElementById('editPbbDesa').value;
+        payload.tahun = document.getElementById('editPbbTahun').value;
+        payload.alamat = document.getElementById('editPbbAlamat').value;
+        payload.dokumentasiBase64 = APP_STATE.docs.EDIT.base64;
+        payload.dokumentasiName = APP_STATE.docs.EDIT.name;
+        payload.dokumentasiMime = APP_STATE.docs.EDIT.mime;
+      } else if (type === 'IKM') {
+        payload.nama = document.getElementById('editIkmNama').value;
+        payload.alamat = document.getElementById('editIkmAlamat').value;
+        payload.kegiatan = document.getElementById('editIkmKegiatan').value;
+        payload.p1Nilai = document.getElementById('editIkmP1').value;
+        payload.p2Nilai = document.getElementById('editIkmP2').value;
+        payload.p3Nilai = document.getElementById('editIkmP3').value;
+        payload.p4Nilai = document.getElementById('editIkmP4').value;
+        payload.p5Nilai = document.getElementById('editIkmP5').value;
+        payload.saran = document.getElementById('editIkmSaran').value;
+      }
+
+      showLoading('Menyimpan perubahan data ' + id + '...');
+      google.script.run
+        .withSuccessHandler(function(res) {
+          hideLoading();
+          if (res && res.success) {
+            closeEditModal();
+            showToast(res.message, 'success');
+            loadDashboardData();
+            loadInitialPublicData();
+          } else {
+            showToast((res && res.message) || 'Gagal memperbarui data.', 'error');
+          }
+        })
+        .withFailureHandler(function(err) {
+          hideLoading();
+          showToast('Error: ' + err.message, 'error');
+        })
+        .updateRecordData(sessionId, type, payload);
+    }
+
+    // 9C. FITUR CETAK LAPORAN PDF & EXPORT EXCEL (.XLSX)
+    function resolveSelectedExportTarget() {
+      const sel = document.getElementById('exportCategorySelect').value;
+      if (sel === 'ACTIVE') {
+        if (['PAJAK', 'PBB', 'IKM'].includes(APP_STATE.activeDashSubTab)) {
+          return APP_STATE.activeDashSubTab;
+        }
+        return 'ALL';
+      }
+      return sel;
+    }
+
+    function getReportPeriodLabel() {
+      const select = document.getElementById('filterReportPeriod');
+      return select && select.options[select.selectedIndex]
+        ? select.options[select.selectedIndex].text
+        : 'Semua Periode';
+    }
+
+    function exportSingleTablePDF(category) {
+      document.getElementById('exportCategorySelect').value = category;
+      exportReportToPDF();
+    }
+
+    function exportSingleTableExcel(category) {
+      document.getElementById('exportCategorySelect').value = category;
+      exportReportToExcel();
+    }
+
+    function exportReportToPDF() {
+      const target = resolveSelectedExportTarget();
+      const periodLabel = getReportPeriodLabel();
+      const printedAt = new Date().toLocaleString('id-ID');
+
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        showToast('Library PDF belum termuat, silakan periksa koneksi internet.', 'error');
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+      // Header Kop Laporan Resmi
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(30, 27, 75);
+      doc.text('LAPORAN REKAPITULASI PENGGALIAN POTENSI PAJAK DAERAH, PBB & SURVEI IKM', 14, 15);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(71, 85, 105);
+      doc.text('Periode Laporan: ' + periodLabel + '   |   Dicetak pada: ' + printedAt, 14, 21);
+      doc.setDrawColor(203, 213, 225);
+      doc.line(14, 24, 283, 24);
+
+      let currentY = 30;
+
+      // 1. Tabel Pajak Daerah
+      if (target === 'ALL' || target === 'PAJAK') {
+        const rows = APP_STATE.dashboardCache.pajakList || [];
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(15, 23, 42);
+        doc.text('A. Rekapitulasi Potensi Pajak Daerah (' + rows.length + ' Data)', 14, currentY);
+
+        const bodyData = rows.map(function(r, idx) {
+          return [
+            idx + 1,
+            r.ID || '-',
+            r.NAMA || '-',
+            (r.KECAMATAN || '') + ' / ' + (r.DESA || ''),
+            r.ALAMAT || '-',
+            formatRupiah(r.NILAI_OMZET),
+            (r.PERSENTASE || 0) + '%',
+            formatRupiah(r.ESTIMASI_PAJAK),
+            r.TAHUN || '-'
+          ];
+        });
+
+        doc.autoTable({
+          startY: currentY + 3,
+          head: [['No', 'ID', 'Nama Wajib Pajak', 'Kecamatan / Desa', 'Alamat', 'Nilai Omzet', 'Tarif', 'Estimasi Pajak', 'Tahun']],
+          body: bodyData.length ? bodyData : [['-', '-', 'Belum ada data Potensi Pajak Daerah', '-', '-', '-', '-', '-', '-']],
+          theme: 'grid',
+          headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 8.5 },
+          bodyStyles: { fontSize: 8 },
+          margin: { left: 14, right: 14 }
+        });
+        currentY = doc.lastAutoTable.finalY + 10;
+      }
+
+      // 2. Tabel PBB
+      if (target === 'ALL' || target === 'PBB') {
+        if (currentY > 165) {
+          doc.addPage();
+          currentY = 18;
+        }
+        const rows = APP_STATE.dashboardCache.pbbList || [];
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(15, 23, 42);
+        doc.text('B. Rekapitulasi Pendataan Pajak Bumi & Bangunan / PBB (' + rows.length + ' Objek)', 14, currentY);
+
+        const bodyData = rows.map(function(r, idx) {
+          return [
+            idx + 1,
+            r.ID || '-',
+            r.NAMA || '-',
+            String(r.NIK || '').replace(/^'/, ''),
+            r.STATUS_NOP || '-',
+            r.NOMOR_NOP || '-',
+            (r.KECAMATAN || '') + ' / ' + (r.DESA || ''),
+            r.ALAMAT || '-',
+            r.TAHUN || '-'
+          ];
+        });
+
+        doc.autoTable({
+          startY: currentY + 3,
+          head: [['No', 'ID', 'Nama Subjek Pajak', 'NIK', 'Status NOP', 'Nomor NOP', 'Kecamatan / Desa', 'Alamat', 'Tahun']],
+          body: bodyData.length ? bodyData : [['-', '-', 'Belum ada data PBB', '-', '-', '-', '-', '-', '-']],
+          theme: 'grid',
+          headStyles: { fillColor: [5, 150, 105], textColor: 255, fontSize: 8.5 },
+          bodyStyles: { fontSize: 8 },
+          margin: { left: 14, right: 14 }
+        });
+        currentY = doc.lastAutoTable.finalY + 10;
+      }
+
+      // 3. Tabel IKM
+      if (target === 'ALL' || target === 'IKM') {
+        if (currentY > 165) {
+          doc.addPage();
+          currentY = 18;
+        }
+        const rows = APP_STATE.dashboardCache.ikmList || [];
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(15, 23, 42);
+        doc.text('C. Rekapitulasi Survei Indeks Kepuasan Masyarakat / IKM (' + rows.length + ' Responden)', 14, currentY);
+
+        const bodyData = rows.map(function(r, idx) {
+          return [
+            idx + 1,
+            r.ID || '-',
+            r.NAMA || '-',
+            r.ALAMAT || '-',
+            r.KEGIATAN || '-',
+            [r.P1_NILAI, r.P2_NILAI, r.P3_NILAI, r.P4_NILAI, r.P5_NILAI].join(' / '),
+            r.TOTAL_NILAI || 0,
+            r.KATEGORI_MUTU || '-',
+            r.SARAN || '-'
+          ];
+        });
+
+        doc.autoTable({
+          startY: currentY + 3,
+          head: [['No', 'ID', 'Nama Responden', 'Alamat', 'Kegiatan', 'Skor P1-P5', 'Total', 'Mutu Layanan', 'Saran']],
+          body: bodyData.length ? bodyData : [['-', '-', 'Belum ada data responden IKM', '-', '-', '-', '-', '-', '-']],
+          theme: 'grid',
+          headStyles: { fillColor: [217, 119, 6], textColor: 255, fontSize: 8.5 },
+          bodyStyles: { fontSize: 8 },
+          margin: { left: 14, right: 14 }
+        });
+      }
+
+      const fileName = 'Laporan_SIPP_PAJAK_' + target + '_' + new Date().toISOString().slice(0, 10) + '.pdf';
+      doc.save(fileName);
+      showToast('Laporan PDF (' + fileName + ') berhasil diunduh!', 'success');
+    }
+
+    function exportReportToExcel() {
+      if (typeof XLSX === 'undefined') {
+        showToast('Library Excel belum termuat, silakan periksa koneksi internet.', 'error');
+        return;
+      }
+
+      const target = resolveSelectedExportTarget();
+      const wb = XLSX.utils.book_new();
+
+      if (target === 'ALL' || target === 'PAJAK') {
+        const pajakData = (APP_STATE.dashboardCache.pajakList || []).map(function(r, idx) {
+          return {
+            'No': idx + 1,
+            'ID Rekaman': r.ID,
+            'Nama Wajib Pajak / Usaha': r.NAMA,
+            'Kecamatan': r.KECAMATAN,
+            'Desa / Kelurahan': r.DESA,
+            'Alamat Lengkap': r.ALAMAT,
+            'Nilai Omzet (Rp)': Number(r.NILAI_OMZET || 0),
+            'Persentase Pajak (%)': Number(r.PERSENTASE || 0),
+            'Estimasi Pajak (Rp)': Number(r.ESTIMASI_PAJAK || 0),
+            'Tahun Pajak': r.TAHUN,
+            'Dokumentasi': r.DOKUMENTASI_URL,
+            'Waktu Input': r.TIMESTAMP,
+            'Diinput Oleh': r.INPUT_BY
+          };
+        });
+        const wsPajak = XLSX.utils.json_to_sheet(pajakData.length ? pajakData : [{ 'Info': 'Belum ada data Potensi Pajak Daerah' }]);
+        XLSX.utils.book_append_sheet(wb, wsPajak, 'Potensi_Pajak_Daerah');
+      }
+
+      if (target === 'ALL' || target === 'PBB') {
+        const pbbData = (APP_STATE.dashboardCache.pbbList || []).map(function(r, idx) {
+          return {
+            'No': idx + 1,
+            'ID Rekaman': r.ID,
+            'Nama Subjek Pajak': r.NAMA,
+            'NIK': String(r.NIK || '').replace(/^'/, ''),
+            'Status NOP': r.STATUS_NOP,
+            'Nomor NOP': r.NOMOR_NOP,
+            'Kecamatan': r.KECAMATAN,
+            'Desa / Kelurahan': r.DESA,
+            'Alamat Objek': r.ALAMAT,
+            'Tahun Pendataan': r.TAHUN,
+            'Dokumentasi': r.DOKUMENTASI_URL,
+            'Waktu Input': r.TIMESTAMP,
+            'Diinput Oleh': r.INPUT_BY
+          };
+        });
+        const wsPbb = XLSX.utils.json_to_sheet(pbbData.length ? pbbData : [{ 'Info': 'Belum ada data PBB' }]);
+        XLSX.utils.book_append_sheet(wb, wsPbb, 'Pendataan_PBB');
+      }
+
+      if (target === 'ALL' || target === 'IKM') {
+        const ikmData = (APP_STATE.dashboardCache.ikmList || []).map(function(r, idx) {
+          return {
+            'No': idx + 1,
+            'ID Responden': r.ID,
+            'Nama Responden': r.NAMA,
+            'Alamat': r.ALAMAT,
+            'Kegiatan Pelayanan': r.KEGIATAN,
+            'P1 (Prosedur)': Number(r.P1_NILAI || 0),
+            'P2 (Kecepatan)': Number(r.P2_NILAI || 0),
+            'P3 (Kompetensi)': Number(r.P3_NILAI || 0),
+            'P4 (Keramahan)': Number(r.P4_NILAI || 0),
+            'P5 (Sarana Digital)': Number(r.P5_NILAI || 0),
+            'Total Skor': Number(r.TOTAL_NILAI || 0),
+            'Kategori Mutu': r.KATEGORI_MUTU,
+            'Saran Masukan': r.SARAN,
+            'Waktu Survei': r.TIMESTAMP
+          };
+        });
+        const wsIkm = XLSX.utils.json_to_sheet(ikmData.length ? ikmData : [{ 'Info': 'Belum ada data IKM' }]);
+        XLSX.utils.book_append_sheet(wb, wsIkm, 'Survei_IKM');
+      }
+
+      const fileName = 'Laporan_SIPP_PAJAK_' + target + '_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+      XLSX.writeFile(wb, fileName);
+      showToast('File Excel (' + fileName + ') berhasil diunduh!', 'success');
+    }
+
+    // 10. INITIALIZATION
+    function loadInitialPublicData() {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.success && res.data) {
+            APP_STATE.wilayahList = res.data.wilayah || [];
+            populateKecamatanDropdowns();
+
+            const st = res.data.summaryStats;
+            if (st) {
+              document.getElementById('statPublicPajak').textContent = st.totalPajakDaerah;
+              document.getElementById('statPublicPbb').textContent = st.totalPbb;
+              document.getElementById('statPublicIkm').textContent = st.avgIkm;
+            }
+          }
+        })
+        .withFailureHandler(function(err) {
+          showToast('Gagal memuat data awal: ' + err.message, 'error');
+        })
+        .getInitialPublicData();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      lucide.createIcons();
+      loadInitialPublicData();
+      checkPersistentSession();
+    });
+  </script>
+</body>
+</html>
